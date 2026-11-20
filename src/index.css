@@ -35,10 +35,10 @@
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
 
-  /* Motion durations - increased for better perception */
-  --duration-exit: 200ms;
-  --duration-enter: 250ms;
-  --duration-move: 350ms;
+  /* Motion durations - subtle and fast for gym context */
+  --duration-exit: 180ms;
+  --duration-enter: 220ms;
+  --duration-move: 280ms;
 }
 
 * {
@@ -284,14 +284,14 @@ input[type='number']:focus {
 
 .btn-ghost {
   background: var(--card);
-  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--text);
 }
 
 .btn-danger {
   background: #2a1210;
   color: #ffb4a8;
-  border: 0.5px solid rgba(255, 90, 90, 0.3);
+  border: 1px solid rgba(255, 90, 90, 0.35);
 }
 
 .btn-orange {
