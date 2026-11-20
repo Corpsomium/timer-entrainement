@@ -1,5 +1,6 @@
 import type { SessionState, Exercise, ExerciseIllustration } from '../types';
 import { formatLoad } from '../utils/formatters';
+import { saveRest } from '../utils/storage';
 
 interface OverviewScreenProps {
   state: SessionState;
@@ -20,6 +21,12 @@ export function OverviewScreen({
 }: OverviewScreenProps) {
   const totalSets = state.exercises.reduce((n, ex) => n + ex.sets, 0);
   const midSession = state.startedAt && state.completedSets < totalSets && !state.finishedAt;
+
+  const adjustRest = (delta: number) => {
+    const newRest = Math.max(15, Math.min(600, state.restSec + delta));
+    setState((prev) => ({ ...prev, restSec: newRest }));
+    saveRest(newRest);
+  };
 
   const groups: Array<{ tag?: string; exercises: Array<{ index: number; exercise: Exercise }> }> =
     [];
@@ -77,9 +84,29 @@ export function OverviewScreen({
           <b>{totalSets}</b>
           <span>séries au total</span>
         </div>
-        <div className="stat">
-          <b>{state.restSec} s</b>
-          <span>repos</span>
+        <div className="stat stat-editable">
+          <div className="stat-edit-group">
+            <button
+              className="btn-stepper"
+              onClick={() => adjustRest(-15)}
+              disabled={state.restSec <= 15}
+              aria-label="Réduire repos de 15s"
+            >
+              −
+            </button>
+            <div className="stat-value-editable">
+              <b>{state.restSec} s</b>
+              <span>repos</span>
+            </div>
+            <button
+              className="btn-stepper"
+              onClick={() => adjustRest(+15)}
+              disabled={state.restSec >= 600}
+              aria-label="Augmenter repos de 15s"
+            >
+              +
+            </button>
+          </div>
         </div>
       </div>
 
@@ -117,29 +144,6 @@ export function OverviewScreen({
             />
           )
         )}
-      </div>
-
-      <label className="field" htmlFor="rest">
-        Repos entre les séries
-      </label>
-      <div className="row">
-        <input
-          id="rest"
-          type="number"
-          min="0"
-          max="600"
-          step="5"
-          value={state.restSec}
-          onChange={(e) =>
-            setState((prev) => ({
-              ...prev,
-              restSec: Math.min(600, Math.max(0, parseInt(e.target.value, 10) || 60)),
-            }))
-          }
-        />{' '}
-        <span className="hint" style={{ margin: 0 }}>
-          secondes
-        </span>
       </div>
 
       <div className="actions">

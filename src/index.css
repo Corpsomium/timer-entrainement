@@ -404,6 +404,62 @@ input[type='number']:focus {
   font-weight: 600;
 }
 
+.stat-editable {
+  cursor: default;
+}
+
+.stat-edit-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.stat-value-editable {
+  flex: 1;
+  text-align: center;
+}
+
+.btn-stepper {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 50%;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.btn-stepper:hover:not(:disabled) {
+  background: var(--hover);
+  border-color: var(--lime);
+  transform: scale(1.05);
+}
+
+.btn-stepper:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.btn-stepper:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn-stepper:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+
 .hero-ex {
   text-align: center;
   padding: 8px 4px 18px;
