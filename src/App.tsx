@@ -1,4 +1,4 @@
-import { useState, useEffect, startTransition, ViewTransition } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from './hooks/useSession';
 import { useIllustrations } from './hooks/useIllustrations';
 import { InputScreen } from './components/InputScreen';
@@ -7,6 +7,7 @@ import { SessionScreen } from './components/SessionScreen';
 import { DoneScreen } from './components/DoneScreen';
 import { shareUrl } from './utils/storage';
 import { ensureAudio } from './utils/audio';
+import { withViewTransition } from './utils/viewTransition';
 
 function App() {
   const {
@@ -44,19 +45,19 @@ function App() {
   }, []);
 
   const loadWorkoutWithTransition = () => {
-    startTransition(() => {
+    withViewTransition(() => {
       loadWorkout();
     });
   };
 
   const startSessionWithTransition = (resume: boolean) => {
-    startTransition(() => {
+    withViewTransition(() => {
       startSession(resume);
     });
   };
 
   const resetSessionWithTransition = () => {
-    startTransition(() => {
+    withViewTransition(() => {
       resetSession();
     });
   };
@@ -95,53 +96,45 @@ function App() {
   return (
     <>
       <div className="wrap">
-        <ViewTransition default="none" enter="fade-in" exit="fade-out">
-          {state.screen === 'input' && (
-            <InputScreen state={state} setState={setState} onLoad={loadWorkoutWithTransition} onShare={handleShare} />
-          )}
-        </ViewTransition>
+        {state.screen === 'input' && (
+          <InputScreen state={state} setState={setState} onLoad={loadWorkoutWithTransition} onShare={handleShare} />
+        )}
 
-        <ViewTransition default="none" enter="fade-in" exit="fade-out">
-          {state.screen === 'overview' && (
-            <OverviewScreen
-              state={state}
-              setState={setState}
-              onStart={() => startSessionWithTransition(false)}
-              onResume={() => startSessionWithTransition(true)}
-              onShare={handleShare}
-              getIllustration={getIllustration}
-            />
-          )}
-        </ViewTransition>
+        {state.screen === 'overview' && (
+          <OverviewScreen
+            state={state}
+            setState={setState}
+            onStart={() => startSessionWithTransition(false)}
+            onResume={() => startSessionWithTransition(true)}
+            onShare={handleShare}
+            getIllustration={getIllustration}
+          />
+        )}
 
-        <ViewTransition default="none" enter="fade-in" exit="fade-out">
-          {state.screen === 'session' && (
-            <SessionScreen
-              state={state}
-              setState={setState}
-              sequence={sequence}
-              onCompleteSet={finishSet}
-              onStartWork={startWorkTimer}
-              onSkipRest={finishRest}
-              onAdjustTimer={adjustTimer}
-              onBack={goBack}
-              onSkipExercise={skipExercise}
-              onReset={resetSessionWithTransition}
-              getIllustration={getIllustration}
-            />
-          )}
-        </ViewTransition>
+        {state.screen === 'session' && (
+          <SessionScreen
+            state={state}
+            setState={setState}
+            sequence={sequence}
+            onCompleteSet={finishSet}
+            onStartWork={startWorkTimer}
+            onSkipRest={finishRest}
+            onAdjustTimer={adjustTimer}
+            onBack={goBack}
+            onSkipExercise={skipExercise}
+            onReset={resetSessionWithTransition}
+            getIllustration={getIllustration}
+          />
+        )}
 
-        <ViewTransition default="none" enter="fade-in" exit="fade-out">
-          {state.screen === 'done' && (
-            <DoneScreen
-              state={state}
-              setState={setState}
-              onRestart={() => startSessionWithTransition(false)}
-              onShare={handleShare}
-            />
-          )}
-        </ViewTransition>
+        {state.screen === 'done' && (
+          <DoneScreen
+            state={state}
+            setState={setState}
+            onRestart={() => startSessionWithTransition(false)}
+            onShare={handleShare}
+          />
+        )}
       </div>
 
       <div className={`toast ${toast ? 'show' : ''}`} role="status">

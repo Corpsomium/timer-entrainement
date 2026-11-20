@@ -652,27 +652,71 @@ input[type='number']:focus {
 }
 
 /* View Transitions */
-@keyframes fade {
+
+/* Disable default root animation - we only want element-level transitions */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+/* Fade animation for screens */
+@keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-::view-transition-old(.fade-out) {
-  animation: var(--duration-exit) ease-in fade reverse;
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
-::view-transition-new(.fade-in) {
-  animation: var(--duration-enter) ease-out var(--duration-exit) both fade;
-}
-
-/* Shared element morph */
-::view-transition-group(.morph) {
+/* Shared element morph - browser handles position/size automatically */
+::view-transition-group(progress-bar),
+::view-transition-group(exercise-header),
+::view-transition-group(exercise-image-0),
+::view-transition-group(exercise-image-1),
+::view-transition-group(exercise-image-2),
+::view-transition-group(exercise-image-3),
+::view-transition-group(exercise-image-4),
+::view-transition-group(exercise-image-5),
+::view-transition-group(exercise-image-6),
+::view-transition-group(exercise-image-7),
+::view-transition-group(exercise-image-8),
+::view-transition-group(exercise-image-9),
+::view-transition-group(action-area),
+::view-transition-group(next-preview) {
   animation-duration: var(--duration-move);
   animation-timing-function: ease-in-out;
 }
 
-::view-transition-old(.morph),
-::view-transition-new(.morph) {
+::view-transition-old(progress-bar),
+::view-transition-new(progress-bar),
+::view-transition-old(exercise-header),
+::view-transition-new(exercise-header),
+::view-transition-old(exercise-image-0),
+::view-transition-new(exercise-image-0),
+::view-transition-old(exercise-image-1),
+::view-transition-new(exercise-image-1),
+::view-transition-old(exercise-image-2),
+::view-transition-new(exercise-image-2),
+::view-transition-old(exercise-image-3),
+::view-transition-new(exercise-image-3),
+::view-transition-old(exercise-image-4),
+::view-transition-new(exercise-image-4),
+::view-transition-old(exercise-image-5),
+::view-transition-new(exercise-image-5),
+::view-transition-old(exercise-image-6),
+::view-transition-new(exercise-image-6),
+::view-transition-old(exercise-image-7),
+::view-transition-new(exercise-image-7),
+::view-transition-old(exercise-image-8),
+::view-transition-new(exercise-image-8),
+::view-transition-old(exercise-image-9),
+::view-transition-new(exercise-image-9),
+::view-transition-old(action-area),
+::view-transition-new(action-area),
+::view-transition-old(next-preview),
+::view-transition-new(next-preview) {
   animation: none;
   mix-blend-mode: normal;
 }
