@@ -53,6 +53,7 @@ export interface ExerciseIllustration {
   exerciseId: string;
   imageUrls: string[];
   name: string;
+  primaryFrame?: number; // Index of the most expressive frame (0 or 1), used for overview thumbnails
   chosenAt: number;
   manual?: boolean;
 }

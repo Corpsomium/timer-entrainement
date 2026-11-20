@@ -263,20 +263,8 @@ function ReadyPhase({
   onStartWork: () => void;
   getIllustration: (name: string) => ExerciseIllustration | null;
 }) {
-  const [imageIndex, setImageIndex] = useState(0);
-
   const ex = state.exercises[currentStep.exerciseIndex!];
   const illustration = getIllustration(ex.name);
-
-  useEffect(() => {
-    if (!illustration || illustration.imageUrls.length <= 1) return;
-
-    const interval = setInterval(() => {
-      setImageIndex((prev) => (prev + 1) % illustration.imageUrls.length);
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [illustration]);
 
   const currentExIndex = state.exercises.findIndex((e) => e === ex);
   const totalExercises = state.exercises.length;
@@ -305,12 +293,26 @@ function ReadyPhase({
         </div>
       </div>
 
-      {illustration && illustration.imageUrls.length > 0 && (
-        <img
-          src={illustration.imageUrls[imageIndex]}
-          alt={ex.name}
-          className="ex-img-large"
-        />
+      {illustration && illustration.imageUrls.length >= 2 && (
+        <div className="dual-frame">
+          <div className="frame-item">
+            <img
+              src={illustration.imageUrls[0]}
+              alt={`${ex.name} - départ`}
+              className="ex-img-dual"
+            />
+            <div className="frame-label">départ</div>
+          </div>
+          <div className="frame-arrow">→</div>
+          <div className="frame-item">
+            <img
+              src={illustration.imageUrls[1]}
+              alt={`${ex.name} - fin`}
+              className="ex-img-dual"
+            />
+            <div className="frame-label">fin</div>
+          </div>
+        </div>
       )}
 
       {ex.durationSec != null ? (

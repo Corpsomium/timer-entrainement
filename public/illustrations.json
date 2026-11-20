@@ -1,11 +1,12 @@
 {
   "fentes arriere": {
-    "exerciseId": "Dumbbell_Rear_Lunge",
+    "exerciseId": "Dumbbell_Lunges",
     "imageUrls": [
-      "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Rear_Lunge/0.jpg",
-      "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Rear_Lunge/1.jpg"
+      "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lunges/0.jpg",
+      "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Lunges/1.jpg"
     ],
-    "name": "Dumbbell Rear Lunge",
+    "name": "Dumbbell Lunges",
+    "primaryFrame": 1,
     "chosenAt": 1700000000000
   },
   "developpe incline": {
@@ -15,6 +16,7 @@
       "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Incline_Dumbbell_Press/1.jpg"
     ],
     "name": "Incline Dumbbell Press",
+    "primaryFrame": 1,
     "chosenAt": 1700000000000
   },
   "rowing penche": {
@@ -24,6 +26,7 @@
       "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bent_Over_Barbell_Row/1.jpg"
     ],
     "name": "Bent Over Barbell Row",
+    "primaryFrame": 1,
     "chosenAt": 1700000000000
   },
   "hip thrust": {
@@ -33,6 +36,7 @@
       "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Hip_Thrust/1.jpg"
     ],
     "name": "Barbell Hip Thrust",
+    "primaryFrame": 1,
     "chosenAt": 1700000000000
   },
   "pull apart": {
@@ -42,6 +46,7 @@
       "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Band_Pull_Apart/1.jpg"
     ],
     "name": "Band Pull Apart",
+    "primaryFrame": 1,
     "chosenAt": 1700000000000
   },
   "pullapart": {
@@ -51,6 +56,7 @@
       "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Band_Pull_Apart/1.jpg"
     ],
     "name": "Band Pull Apart",
+    "primaryFrame": 1,
     "chosenAt": 1700000000000
   },
   "extensions mollets": {
@@ -60,6 +66,7 @@
       "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Calf_Raises/1.jpg"
     ],
     "name": "Standing Calf Raises",
+    "primaryFrame": 1,
     "chosenAt": 1700000000000
   },
   "kickback": {
@@ -69,6 +76,7 @@
       "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Tricep_Dumbbell_Kickback/1.jpg"
     ],
     "name": "Tricep Dumbbell Kickback",
+    "primaryFrame": 1,
     "chosenAt": 1700000000000
   },
   "hammer preacher curl 45": {
@@ -78,6 +86,7 @@
       "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hammer_Curls/1.jpg"
     ],
     "name": "Hammer Curls",
+    "primaryFrame": 1,
     "chosenAt": 1700000000000
   },
   "bird dogs": {
@@ -87,6 +96,7 @@
       "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Superman/1.jpg"
     ],
     "name": "Superman",
+    "primaryFrame": 1,
     "chosenAt": 1700000000000
   },
   "marches du fermier": {
@@ -96,6 +106,7 @@
       "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Farmers_Walk/1.jpg"
     ],
     "name": "Farmers Walk",
+    "primaryFrame": 0,
     "chosenAt": 1700000000000
   }
 }
