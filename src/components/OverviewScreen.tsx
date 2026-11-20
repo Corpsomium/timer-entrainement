@@ -3,6 +3,7 @@ import type { SessionState, Exercise, ExerciseIllustration } from '../types';
 import { formatLoad } from '../utils/formatters';
 import { saveRest } from '../utils/storage';
 import { Lightbox } from './Lightbox';
+import { ImagePicker } from './ImagePicker';
 
 interface OverviewScreenProps {
   state: SessionState;
@@ -11,6 +12,7 @@ interface OverviewScreenProps {
   onResume: () => void;
   onShare: () => void;
   getIllustration: (name: string) => ExerciseIllustration | null;
+  updateExerciseIllustration: (exerciseName: string, illustration: ExerciseIllustration) => void;
 }
 
 export function OverviewScreen({
@@ -20,7 +22,9 @@ export function OverviewScreen({
   onResume,
   onShare,
   getIllustration,
+  updateExerciseIllustration,
 }: OverviewScreenProps) {
+  const [pickerExercise, setPickerExercise] = useState<Exercise | null>(null);
   const totalSets = state.exercises.reduce((n, ex) => n + ex.sets, 0);
   const midSession = state.startedAt && state.completedSets < totalSets && !state.finishedAt;
 
@@ -28,6 +32,27 @@ export function OverviewScreen({
     const newRest = Math.max(15, Math.min(600, state.restSec + delta));
     setState((prev) => ({ ...prev, restSec: newRest }));
     saveRest(newRest);
+  };
+
+  const handleSelectIllustration = (illustration: ExerciseIllustration) => {
+    if (pickerExercise) {
+      updateExerciseIllustration(pickerExercise.name, illustration);
+      setPickerExercise(null);
+    }
+  };
+
+  const handleRemoveIllustration = () => {
+    if (pickerExercise) {
+      const emptyIllustration: ExerciseIllustration = {
+        exerciseId: '',
+        imageUrls: [],
+        name: pickerExercise.name,
+        chosenAt: Date.now(),
+        manual: true,
+      };
+      updateExerciseIllustration(pickerExercise.name, emptyIllustration);
+      setPickerExercise(null);
+    }
   };
 
   const groups: Array<{ tag?: string; exercises: Array<{ index: number; exercise: Exercise }> }> =
@@ -134,7 +159,7 @@ export function OverviewScreen({
                   exercise={item.exercise}
                   index={item.index}
                   illustration={getIllustration(item.exercise.name)}
-                  onImageChange={() => setState((prev) => ({ ...prev, screen: 'input' }))}
+                  onImageChange={setPickerExercise}
                 />
               ))}
             </div>
@@ -144,7 +169,7 @@ export function OverviewScreen({
               exercise={group.exercises[0].exercise}
               index={group.exercises[0].index}
               illustration={getIllustration(group.exercises[0].exercise.name)}
-              onImageChange={() => setState((prev) => ({ ...prev, screen: 'input' }))}
+              onImageChange={setPickerExercise}
             />
           )
         )}
@@ -173,6 +198,16 @@ export function OverviewScreen({
           Modifier le bloc
         </button>
       </div>
+
+      {pickerExercise && (
+        <ImagePicker
+          exerciseName={pickerExercise.name}
+          currentIllustration={getIllustration(pickerExercise.name)}
+          onSelect={handleSelectIllustration}
+          onRemove={handleRemoveIllustration}
+          onClose={() => setPickerExercise(null)}
+        />
+      )}
     </>
   );
 }
@@ -186,7 +221,7 @@ function ExerciseCard({
   exercise: Exercise;
   index: number;
   illustration: ExerciseIllustration | null;
-  onImageChange: () => void;
+  onImageChange: (exercise: Exercise) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [lightbox, setLightbox] = useState<{ images: string[]; name: string } | null>(null);
@@ -283,7 +318,7 @@ function ExerciseCard({
               className="btn btn-ghost btn-change-image"
               onClick={(e) => {
                 e.stopPropagation();
-                onImageChange();
+                onImageChange(exercise);
               }}
             >
               Changer l'image

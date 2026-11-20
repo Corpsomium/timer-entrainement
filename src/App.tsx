@@ -25,7 +25,7 @@ function App() {
     resetSession,
   } = useSession();
 
-  const { getIllustration } = useIllustrations(state.exercises);
+  const { getIllustration, updateExerciseIllustration } = useIllustrations(state.exercises);
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -108,6 +108,7 @@ function App() {
             onResume={() => startSessionWithTransition(true)}
             onShare={handleShare}
             getIllustration={getIllustration}
+            updateExerciseIllustration={updateExerciseIllustration}
           />
         )}
 
@@ -124,6 +125,7 @@ function App() {
             onSkipExercise={skipExercise}
             onReset={resetSessionWithTransition}
             getIllustration={getIllustration}
+            updateExerciseIllustration={updateExerciseIllustration}
           />
         )}
 

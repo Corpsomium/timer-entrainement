@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import type { SessionState, SequenceStep, ExerciseIllustration } from '../types';
+import type { SessionState, SequenceStep, ExerciseIllustration, Exercise } from '../types';
 import { formatDuration, formatDurationLabel } from '../utils/formatters';
 import { withViewTransition } from '../utils/viewTransition';
 import { Lightbox } from './Lightbox';
+import { ImagePicker } from './ImagePicker';
 
 interface SessionScreenProps {
   state: SessionState;
@@ -16,6 +17,7 @@ interface SessionScreenProps {
   onSkipExercise: () => void;
   onReset: () => void;
   getIllustration: (name: string) => ExerciseIllustration | null;
+  updateExerciseIllustration: (exerciseName: string, illustration: ExerciseIllustration) => void;
 }
 
 const CIRC = 2 * Math.PI * 48;
@@ -32,10 +34,33 @@ export function SessionScreen({
   onSkipExercise,
   onReset,
   getIllustration,
+  updateExerciseIllustration,
 }: SessionScreenProps) {
   const [lightbox, setLightbox] = useState<{ images: string[]; name: string } | null>(null);
+  const [pickerExercise, setPickerExercise] = useState<Exercise | null>(null);
   const totalSets = state.exercises.reduce((n, ex) => n + ex.sets, 0);
   const pct = totalSets ? Math.round((state.completedSets / totalSets) * 100) : 0;
+
+  const handleSelectIllustration = (illustration: ExerciseIllustration) => {
+    if (pickerExercise) {
+      updateExerciseIllustration(pickerExercise.name, illustration);
+      setPickerExercise(null);
+    }
+  };
+
+  const handleRemoveIllustration = () => {
+    if (pickerExercise) {
+      const emptyIllustration: ExerciseIllustration = {
+        exerciseId: '',
+        imageUrls: [],
+        name: pickerExercise.name,
+        chosenAt: Date.now(),
+        manual: true,
+      };
+      updateExerciseIllustration(pickerExercise.name, emptyIllustration);
+      setPickerExercise(null);
+    }
+  };
 
   const currentStep = sequence[state.stepIndex];
   if (!currentStep) {
@@ -98,6 +123,7 @@ export function SessionScreen({
           onStartWork={onStartWork}
           getIllustration={getIllustration}
           setLightbox={setLightbox}
+          setPickerExercise={setPickerExercise}
         />
       )}
 
@@ -126,6 +152,16 @@ export function SessionScreen({
           labels={['départ', 'fin']}
           exerciseName={lightbox.name}
           onClose={() => setLightbox(null)}
+        />
+      )}
+
+      {pickerExercise && (
+        <ImagePicker
+          exerciseName={pickerExercise.name}
+          currentIllustration={getIllustration(pickerExercise.name)}
+          onSelect={handleSelectIllustration}
+          onRemove={handleRemoveIllustration}
+          onClose={() => setPickerExercise(null)}
         />
       )}
     </>
@@ -284,6 +320,7 @@ function ReadyPhase({
   onStartWork,
   getIllustration,
   setLightbox,
+  setPickerExercise,
 }: {
   state: SessionState;
   currentStep: SequenceStep;
@@ -291,6 +328,7 @@ function ReadyPhase({
   onStartWork: () => void;
   getIllustration: (name: string) => ExerciseIllustration | null;
   setLightbox: (lightbox: { images: string[]; name: string } | null) => void;
+  setPickerExercise: (exercise: Exercise | null) => void;
 }) {
   const ex = state.exercises[currentStep.exerciseIndex!];
   const illustration = getIllustration(ex.name);
@@ -320,9 +358,21 @@ function ReadyPhase({
 
   return (
     <>
-      <div className="hero-ex" style={{ viewTransitionName: 'exercise-header' } as React.CSSProperties}>
+      <div className="hero-ex" style={{ viewTransitionName: 'exercise-header', position: 'relative' } as React.CSSProperties}>
         <div className="kicker">{kicker}</div>
         <h2>{ex.name}</h2>
+        <button
+          className="btn-edit-image"
+          onClick={() => setLightbox({ images: [], name: '' })}
+          onClickCapture={(e) => {
+            e.stopPropagation();
+            setPickerExercise(ex);
+          }}
+          title="Changer l'image"
+          aria-label="Changer l'image"
+        >
+          ✎
+        </button>
         <div className="set-badge">
           Série {setNum}/{totalSets}
         </div>
