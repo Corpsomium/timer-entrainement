@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { SessionState, SequenceStep, ExerciseIllustration } from '../types';
 import { formatDuration, formatDurationLabel } from '../utils/formatters';
+import { withViewTransition } from '../utils/viewTransition';
 
 interface SessionScreenProps {
   state: SessionState;
@@ -132,6 +133,12 @@ function RestPhase({
 }) {
   const [remaining, setRemaining] = useState(Math.max(0, (state.endsAt || 0) - Date.now()));
 
+  const handleSkipRest = () => {
+    withViewTransition(() => {
+      onSkipRest();
+    });
+  };
+
   useEffect(() => {
     const interval = setInterval(() => {
       setRemaining(Math.max(0, (state.endsAt || 0) - Date.now()));
@@ -178,7 +185,7 @@ function RestPhase({
         <button className="btn btn-ghost" onClick={() => onAdjustTimer(-15)}>
           −15 s
         </button>
-        <button className="btn btn-orange" onClick={onSkipRest}>
+        <button className="btn btn-orange" onClick={handleSkipRest}>
           Passer
         </button>
         <button className="btn btn-ghost" onClick={() => onAdjustTimer(15)}>
@@ -199,6 +206,12 @@ function WorkPhase({
   onAdjustTimer: (deltaSec: number) => void;
 }) {
   const [remaining, setRemaining] = useState(Math.max(0, (state.endsAt || 0) - Date.now()));
+
+  const handleCompleteSet = () => {
+    withViewTransition(() => {
+      onCompleteSet();
+    });
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -242,7 +255,7 @@ function WorkPhase({
       </div>
 
       <div className="actions">
-        <button className="btn btn-primary" onClick={onCompleteSet}>
+        <button className="btn btn-primary" onClick={handleCompleteSet}>
           Terminer la série
         </button>
       </div>
@@ -265,6 +278,18 @@ function ReadyPhase({
 }) {
   const ex = state.exercises[currentStep.exerciseIndex!];
   const illustration = getIllustration(ex.name);
+
+  const handleCompleteSet = () => {
+    withViewTransition(() => {
+      onCompleteSet();
+    });
+  };
+
+  const handleStartWork = () => {
+    withViewTransition(() => {
+      onStartWork();
+    });
+  };
 
   const currentExIndex = state.exercises.findIndex((e) => e === ex);
   const totalExercises = state.exercises.length;
@@ -320,13 +345,13 @@ function ReadyPhase({
 
       {ex.durationSec != null ? (
         <div className="actions" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
-          <button className="btn btn-primary" onClick={onStartWork}>
+          <button className="btn btn-primary" onClick={handleStartWork}>
             Démarrer
           </button>
         </div>
       ) : (
         <div className="actions" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
-          <button className="btn btn-primary" onClick={onCompleteSet}>
+          <button className="btn btn-primary" onClick={handleCompleteSet}>
             Série terminée
           </button>
         </div>
