@@ -56,7 +56,7 @@ export function SessionScreen({
 
   return (
     <>
-      <div className="topbar">
+      <div className="topbar" style={{ viewTransitionName: 'progress-bar' } as React.CSSProperties}>
         <button className="icon-btn" onClick={onBack} disabled={!canGoBack} title="Revenir en arrière">
           ←
         </button>
@@ -145,7 +145,7 @@ function RestPhase({
 
   return (
     <>
-      <div className="timer-box">
+      <div className="timer-box" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
         <div className="ring-wrap rest">
           <svg viewBox="0 0 108 108" aria-hidden="true">
             <circle className="ring-track" cx="54" cy="54" r="48"></circle>
@@ -165,7 +165,7 @@ function RestPhase({
       </div>
 
       {nextExercise && (
-        <div className="next-preview">
+        <div className="next-preview" style={{ viewTransitionName: 'next-preview' } as React.CSSProperties}>
           <div className="kicker">Prochain</div>
           <b>{nextExercise.name}</b>
           <span>
@@ -213,7 +213,7 @@ function WorkPhase({
 
   return (
     <>
-      <div className="timer-box">
+      <div className="timer-box" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
         <div className="ring-wrap">
           <svg viewBox="0 0 108 108" aria-hidden="true">
             <circle className="ring-track" cx="54" cy="54" r="48"></circle>
@@ -279,7 +279,7 @@ function ReadyPhase({
 
   return (
     <>
-      <div className="hero-ex">
+      <div className="hero-ex" style={{ viewTransitionName: 'exercise-header' } as React.CSSProperties}>
         <div className="kicker">{kicker}</div>
         <h2>{ex.name}</h2>
         <div className="set-badge">
@@ -294,7 +294,10 @@ function ReadyPhase({
       </div>
 
       {illustration && illustration.imageUrls.length >= 2 && (
-        <div className="dual-frame">
+        <div 
+          className="dual-frame"
+          style={{ viewTransitionName: `exercise-image-${currentExIndex}` } as React.CSSProperties}
+        >
           <div className="frame-item">
             <img
               src={illustration.imageUrls[0]}
@@ -316,13 +319,13 @@ function ReadyPhase({
       )}
 
       {ex.durationSec != null ? (
-        <div className="actions">
+        <div className="actions" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
           <button className="btn btn-primary" onClick={onStartWork}>
             Démarrer
           </button>
         </div>
       ) : (
-        <div className="actions">
+        <div className="actions" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
           <button className="btn btn-primary" onClick={onCompleteSet}>
             Série terminée
           </button>

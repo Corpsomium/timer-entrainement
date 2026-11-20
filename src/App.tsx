@@ -7,6 +7,7 @@ import { SessionScreen } from './components/SessionScreen';
 import { DoneScreen } from './components/DoneScreen';
 import { shareUrl } from './utils/storage';
 import { ensureAudio } from './utils/audio';
+import { withViewTransition } from './utils/viewTransition';
 
 function App() {
   const {
@@ -43,6 +44,24 @@ function App() {
     };
   }, []);
 
+  const loadWorkoutWithTransition = () => {
+    withViewTransition(() => {
+      loadWorkout();
+    });
+  };
+
+  const startSessionWithTransition = (resume: boolean) => {
+    withViewTransition(() => {
+      startSession(resume);
+    });
+  };
+
+  const resetSessionWithTransition = () => {
+    withViewTransition(() => {
+      resetSession();
+    });
+  };
+
   const showToast = (msg: string) => {
     setToast(msg);
     setTimeout(() => setToast(null), 1800);
@@ -78,15 +97,15 @@ function App() {
     <>
       <div className="wrap">
         {state.screen === 'input' && (
-          <InputScreen state={state} setState={setState} onLoad={loadWorkout} onShare={handleShare} />
+          <InputScreen state={state} setState={setState} onLoad={loadWorkoutWithTransition} onShare={handleShare} />
         )}
 
         {state.screen === 'overview' && (
           <OverviewScreen
             state={state}
             setState={setState}
-            onStart={() => startSession(false)}
-            onResume={() => startSession(true)}
+            onStart={() => startSessionWithTransition(false)}
+            onResume={() => startSessionWithTransition(true)}
             onShare={handleShare}
             getIllustration={getIllustration}
           />
@@ -103,7 +122,7 @@ function App() {
             onAdjustTimer={adjustTimer}
             onBack={goBack}
             onSkipExercise={skipExercise}
-            onReset={resetSession}
+            onReset={resetSessionWithTransition}
             getIllustration={getIllustration}
           />
         )}
@@ -112,7 +131,7 @@ function App() {
           <DoneScreen
             state={state}
             setState={setState}
-            onRestart={() => startSession(false)}
+            onRestart={() => startSessionWithTransition(false)}
             onShare={handleShare}
           />
         )}
