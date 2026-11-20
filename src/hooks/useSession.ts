@@ -20,10 +20,10 @@ const DEFAULT_BLOCK = `Fentes arrière : 3x10 (2x10kg)
 Développé incliné : 3x12 (2x15kg)
 Rowing penché : 3x12 (2x15kg)
 Hip thrust : 3x15 (20kg)
-Pull-apart : 3x15 (bande20)
-Extensions mollets : 3x15 (20kg)
-Kickback : 3x10 (7.5kg)
-Hammer preacher curl 45° : 3x10 (10kg)
+Pull-apart : 3x15 (bande20) setA
+Extensions mollets : 3x15 (20kg) setA
+Kickback : 3x10 (7.5kg) setB
+Hammer preacher curl 45° : 3x10 (10kg) setB
 Bird dogs : 2x12
 Marches du fermier : 3x30s (2x15kg)`;
 
