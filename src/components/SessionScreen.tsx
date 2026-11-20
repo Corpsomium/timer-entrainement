@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { SessionState, SequenceStep, ExerciseIllustration } from '../types';
 import { formatDuration, formatDurationLabel } from '../utils/formatters';
 import { withViewTransition } from '../utils/viewTransition';
+import { Lightbox } from './Lightbox';
 
 interface SessionScreenProps {
   state: SessionState;
@@ -32,6 +33,7 @@ export function SessionScreen({
   onReset,
   getIllustration,
 }: SessionScreenProps) {
+  const [lightbox, setLightbox] = useState<{ images: string[]; name: string } | null>(null);
   const totalSets = state.exercises.reduce((n, ex) => n + ex.sets, 0);
   const pct = totalSets ? Math.round((state.completedSets / totalSets) * 100) : 0;
 
@@ -95,6 +97,7 @@ export function SessionScreen({
           onCompleteSet={onCompleteSet}
           onStartWork={onStartWork}
           getIllustration={getIllustration}
+          setLightbox={setLightbox}
         />
       )}
 
@@ -116,6 +119,15 @@ export function SessionScreen({
           Réinitialiser
         </button>
       </div>
+
+      {lightbox && (
+        <Lightbox
+          images={lightbox.images}
+          labels={['départ', 'fin']}
+          exerciseName={lightbox.name}
+          onClose={() => setLightbox(null)}
+        />
+      )}
     </>
   );
 }
@@ -269,12 +281,14 @@ function ReadyPhase({
   onCompleteSet,
   onStartWork,
   getIllustration,
+  setLightbox,
 }: {
   state: SessionState;
   currentStep: SequenceStep;
   onCompleteSet: () => void;
   onStartWork: () => void;
   getIllustration: (name: string) => ExerciseIllustration | null;
+  setLightbox: (lightbox: { images: string[]; name: string } | null) => void;
 }) {
   const ex = state.exercises[currentStep.exerciseIndex!];
   const illustration = getIllustration(ex.name);
@@ -321,7 +335,23 @@ function ReadyPhase({
       {illustration && illustration.imageUrls.length >= 2 && (
         <div 
           className="dual-frame"
-          style={{ viewTransitionName: `exercise-image-${currentExIndex}` } as React.CSSProperties}
+          style={{ viewTransitionName: `exercise-image-${currentExIndex}`, cursor: 'pointer' } as React.CSSProperties}
+          onClick={() => {
+            if (illustration.imageUrls.length >= 2) {
+              setLightbox({ images: illustration.imageUrls, name: ex.name });
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              if (illustration.imageUrls.length >= 2) {
+                setLightbox({ images: illustration.imageUrls, name: ex.name });
+              }
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label="Agrandir les images"
         >
           <div className="frame-item">
             <img
