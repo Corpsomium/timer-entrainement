@@ -64,7 +64,7 @@ function App() {
 
   const showToast = (msg: string) => {
     setToast(msg);
-    setTimeout(() => setToast(null), 1800);
+    setTimeout(() => setToast(null), 3000);
   };
 
   const handleShare = () => {
