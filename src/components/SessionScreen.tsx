@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, startTransition, ViewTransition } from 'react';
 import type { SessionState, SequenceStep, ExerciseIllustration } from '../types';
 import { formatDuration, formatDurationLabel } from '../utils/formatters';
-import { withViewTransition } from '../utils/viewTransition';
 
 interface SessionScreenProps {
   state: SessionState;
@@ -57,23 +56,25 @@ export function SessionScreen({
 
   return (
     <>
-      <div className="topbar" style={{ viewTransitionName: 'progress-bar' } as React.CSSProperties}>
-        <button className="icon-btn" onClick={onBack} disabled={!canGoBack} title="Revenir en arrière">
-          ←
-        </button>
-        <div className="progress-wrap">
-          <div className="progress-meta">
-            <span>{state.completedSets} / {totalSets} séries</span>
-            <span>{pct}%</span>
+      <ViewTransition name="progress-bar" share="morph" default="none">
+        <div className="topbar">
+          <button className="icon-btn" onClick={onBack} disabled={!canGoBack} title="Revenir en arrière">
+            ←
+          </button>
+          <div className="progress-wrap">
+            <div className="progress-meta">
+              <span>{state.completedSets} / {totalSets} séries</span>
+              <span>{pct}%</span>
+            </div>
+            <div className="bar">
+              <i style={{ width: `${pct}%` }}></i>
+            </div>
           </div>
-          <div className="bar">
-            <i style={{ width: `${pct}%` }}></i>
-          </div>
+          <button className="icon-btn" onClick={onSkipExercise} title="Passer l'exercice">
+            ⏭
+          </button>
         </div>
-        <button className="icon-btn" onClick={onSkipExercise} title="Passer l'exercice">
-          ⏭
-        </button>
-      </div>
+      </ViewTransition>
 
       {currentStep.type === 'rest' ? (
         <RestPhase
@@ -133,12 +134,6 @@ function RestPhase({
 }) {
   const [remaining, setRemaining] = useState(Math.max(0, (state.endsAt || 0) - Date.now()));
 
-  const handleSkipRest = () => {
-    withViewTransition(() => {
-      onSkipRest();
-    });
-  };
-
   useEffect(() => {
     const interval = setInterval(() => {
       setRemaining(Math.max(0, (state.endsAt || 0) - Date.now()));
@@ -152,40 +147,44 @@ function RestPhase({
 
   return (
     <>
-      <div className="timer-box" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
-        <div className="ring-wrap rest">
-          <svg viewBox="0 0 108 108" aria-hidden="true">
-            <circle className="ring-track" cx="54" cy="54" r="48"></circle>
-            <circle
-              className="ring-val"
-              cx="54"
-              cy="54"
-              r="48"
-              style={{ strokeDasharray: CIRC, strokeDashoffset: offset }}
-            ></circle>
-          </svg>
-          <div className="ring-center">
-            <div className="time">{formatDuration(remaining)}</div>
-            <div className="sub">Repos</div>
+      <ViewTransition name="action-area" share="morph" default="none">
+        <div className="timer-box">
+          <div className="ring-wrap rest">
+            <svg viewBox="0 0 108 108" aria-hidden="true">
+              <circle className="ring-track" cx="54" cy="54" r="48"></circle>
+              <circle
+                className="ring-val"
+                cx="54"
+                cy="54"
+                r="48"
+                style={{ strokeDasharray: CIRC, strokeDashoffset: offset }}
+              ></circle>
+            </svg>
+            <div className="ring-center">
+              <div className="time">{formatDuration(remaining)}</div>
+              <div className="sub">Repos</div>
+            </div>
           </div>
         </div>
-      </div>
+      </ViewTransition>
 
       {nextExercise && (
-        <div className="next-preview" style={{ viewTransitionName: 'next-preview' } as React.CSSProperties}>
-          <div className="kicker">Prochain</div>
-          <b>{nextExercise.name}</b>
-          <span>
-            Série {nextExercise.setIndex + 1}/{nextExercise.totalSets} · {nextExercise.load}
-          </span>
-        </div>
+        <ViewTransition enter="slide-up" exit="slide-down" default="none">
+          <div className="next-preview">
+            <div className="kicker">Prochain</div>
+            <b>{nextExercise.name}</b>
+            <span>
+              Série {nextExercise.setIndex + 1}/{nextExercise.totalSets} · {nextExercise.load}
+            </span>
+          </div>
+        </ViewTransition>
       )}
 
       <div className="adj">
         <button className="btn btn-ghost" onClick={() => onAdjustTimer(-15)}>
           −15 s
         </button>
-        <button className="btn btn-orange" onClick={handleSkipRest}>
+        <button className="btn btn-orange" onClick={() => startTransition(() => onSkipRest())}>
           Passer
         </button>
         <button className="btn btn-ghost" onClick={() => onAdjustTimer(15)}>
@@ -207,12 +206,6 @@ function WorkPhase({
 }) {
   const [remaining, setRemaining] = useState(Math.max(0, (state.endsAt || 0) - Date.now()));
 
-  const handleCompleteSet = () => {
-    withViewTransition(() => {
-      onCompleteSet();
-    });
-  };
-
   useEffect(() => {
     const interval = setInterval(() => {
       setRemaining(Math.max(0, (state.endsAt || 0) - Date.now()));
@@ -226,24 +219,26 @@ function WorkPhase({
 
   return (
     <>
-      <div className="timer-box" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
-        <div className="ring-wrap">
-          <svg viewBox="0 0 108 108" aria-hidden="true">
-            <circle className="ring-track" cx="54" cy="54" r="48"></circle>
-            <circle
-              className="ring-val"
-              cx="54"
-              cy="54"
-              r="48"
-              style={{ strokeDasharray: CIRC, strokeDashoffset: offset }}
-            ></circle>
-          </svg>
-          <div className="ring-center">
-            <div className="time">{formatDuration(remaining)}</div>
-            <div className="sub">Effort</div>
+      <ViewTransition name="action-area" share="morph" default="none">
+        <div className="timer-box">
+          <div className="ring-wrap">
+            <svg viewBox="0 0 108 108" aria-hidden="true">
+              <circle className="ring-track" cx="54" cy="54" r="48"></circle>
+              <circle
+                className="ring-val"
+                cx="54"
+                cy="54"
+                r="48"
+                style={{ strokeDasharray: CIRC, strokeDashoffset: offset }}
+              ></circle>
+            </svg>
+            <div className="ring-center">
+              <div className="time">{formatDuration(remaining)}</div>
+              <div className="sub">Effort</div>
+            </div>
           </div>
         </div>
-      </div>
+      </ViewTransition>
 
       <div className="adj" style={{ gridTemplateColumns: '1fr 1fr' }}>
         <button className="btn btn-ghost" onClick={() => onAdjustTimer(-15)}>
@@ -255,7 +250,7 @@ function WorkPhase({
       </div>
 
       <div className="actions">
-        <button className="btn btn-primary" onClick={handleCompleteSet}>
+        <button className="btn btn-primary" onClick={() => startTransition(() => onCompleteSet())}>
           Terminer la série
         </button>
       </div>
@@ -278,19 +273,6 @@ function ReadyPhase({
 }) {
   const ex = state.exercises[currentStep.exerciseIndex!];
   const illustration = getIllustration(ex.name);
-
-  const handleCompleteSet = () => {
-    withViewTransition(() => {
-      onCompleteSet();
-    });
-  };
-
-  const handleStartWork = () => {
-    withViewTransition(() => {
-      onStartWork();
-    });
-  };
-
   const currentExIndex = state.exercises.findIndex((e) => e === ex);
   const totalExercises = state.exercises.length;
 
@@ -304,57 +286,62 @@ function ReadyPhase({
 
   return (
     <>
-      <div className="hero-ex" style={{ viewTransitionName: 'exercise-header' } as React.CSSProperties}>
-        <div className="kicker">{kicker}</div>
-        <h2>{ex.name}</h2>
-        <div className="set-badge">
-          Série {setNum}/{totalSets}
+      <ViewTransition name="exercise-header" share="morph" default="none">
+        <div className="hero-ex">
+          <div className="kicker">{kicker}</div>
+          <h2>{ex.name}</h2>
+          <div className="set-badge">
+            Série {setNum}/{totalSets}
+          </div>
+          <div className="meta-line">
+            <strong>
+              {ex.durationSec != null ? formatDurationLabel(ex.durationSec) : `${ex.reps} reps`}
+            </strong>
+            {ex.weight && ` · ${ex.weight}`}
+          </div>
         </div>
-        <div className="meta-line">
-          <strong>
-            {ex.durationSec != null ? formatDurationLabel(ex.durationSec) : `${ex.reps} reps`}
-          </strong>
-          {ex.weight && ` · ${ex.weight}`}
-        </div>
-      </div>
+      </ViewTransition>
 
       {illustration && illustration.imageUrls.length >= 2 && (
-        <div 
-          className="dual-frame"
-          style={{ viewTransitionName: `exercise-image-${currentExIndex}` } as React.CSSProperties}
-        >
-          <div className="frame-item">
-            <img
-              src={illustration.imageUrls[0]}
-              alt={`${ex.name} - départ`}
-              className="ex-img-dual"
-            />
-            <div className="frame-label">départ</div>
+        <ViewTransition name={`exercise-image-${currentExIndex}`} share="morph" default="none">
+          <div className="dual-frame">
+            <div className="frame-item">
+              <img
+                src={illustration.imageUrls[0]}
+                alt={`${ex.name} - départ`}
+                className="ex-img-dual"
+              />
+              <div className="frame-label">départ</div>
+            </div>
+            <div className="frame-arrow">→</div>
+            <div className="frame-item">
+              <img
+                src={illustration.imageUrls[1]}
+                alt={`${ex.name} - fin`}
+                className="ex-img-dual"
+              />
+              <div className="frame-label">fin</div>
+            </div>
           </div>
-          <div className="frame-arrow">→</div>
-          <div className="frame-item">
-            <img
-              src={illustration.imageUrls[1]}
-              alt={`${ex.name} - fin`}
-              className="ex-img-dual"
-            />
-            <div className="frame-label">fin</div>
-          </div>
-        </div>
+        </ViewTransition>
       )}
 
       {ex.durationSec != null ? (
-        <div className="actions" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
-          <button className="btn btn-primary" onClick={handleStartWork}>
-            Démarrer
-          </button>
-        </div>
+        <ViewTransition name="action-area" share="morph" default="none">
+          <div className="actions">
+            <button className="btn btn-primary" onClick={() => startTransition(() => onStartWork())}>
+              Démarrer
+            </button>
+          </div>
+        </ViewTransition>
       ) : (
-        <div className="actions" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
-          <button className="btn btn-primary" onClick={handleCompleteSet}>
-            Série terminée
-          </button>
-        </div>
+        <ViewTransition name="action-area" share="morph" default="none">
+          <div className="actions">
+            <button className="btn btn-primary" onClick={() => startTransition(() => onCompleteSet())}>
+              Série terminée
+            </button>
+          </div>
+        </ViewTransition>
       )}
     </>
   );

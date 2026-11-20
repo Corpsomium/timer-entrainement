@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, startTransition } from 'react';
 import type { SessionState, SequenceStep } from '../types';
 import { parseWorkout } from '../utils/parser';
 import { buildSequence } from '../utils/sequencer';
-import { withViewTransition } from '../utils/viewTransition';
 import {
   loadBlock,
   saveBlock,
@@ -125,7 +124,7 @@ export function useSession() {
             const nextStep = sequence[nextStepIndex];
 
             if (!nextStep) {
-              withViewTransition(() => {
+              startTransition(() => {
                 setState((prev) => ({
                   ...prev,
                   screen: 'done',
@@ -140,7 +139,7 @@ export function useSession() {
             }
 
             if (nextStep.type === 'rest') {
-              withViewTransition(() => {
+              startTransition(() => {
                 setState((prev) => ({
                   ...prev,
                   completedSets: prev.completedSets + 1,
@@ -152,7 +151,7 @@ export function useSession() {
               });
               beepFlagsRef.current = { 3: false, 2: false, 1: false, 0: false };
             } else {
-              withViewTransition(() => {
+              startTransition(() => {
                 setState((prev) => ({
                   ...prev,
                   completedSets: prev.completedSets + 1,
@@ -165,7 +164,7 @@ export function useSession() {
             }
           } else {
             const nextStepIndex = state.stepIndex + 1;
-            withViewTransition(() => {
+            startTransition(() => {
               setState((prev) => ({
                 ...prev,
                 stepIndex: nextStepIndex,
