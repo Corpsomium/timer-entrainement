@@ -686,13 +686,13 @@ input[type='number']:focus {
   }
 }
 
-/* Root: subtle quick crossfade */
+/* Root: subtle quick crossfade, simultaneous, NO delay */
 ::view-transition-old(root) {
-  animation: 120ms ease-out vt-fade-out;
+  animation: 100ms ease-out vt-fade-out both;
 }
 
 ::view-transition-new(root) {
-  animation: 120ms ease-in vt-fade-in;
+  animation: 100ms ease-in vt-fade-in both;
 }
 
 /* Shared element morph - browser handles position/size automatically */
@@ -714,7 +714,7 @@ input[type='number']:focus {
   animation-timing-function: ease-in-out;
 }
 
-/* Named elements: crossfade old content out, new content in */
+/* Named elements: TRUE simultaneous crossfade - same duration, NO delay, both fill-mode */
 ::view-transition-old(progress-bar),
 ::view-transition-old(exercise-header),
 ::view-transition-old(exercise-image-0),
@@ -728,7 +728,7 @@ input[type='number']:focus {
 ::view-transition-old(exercise-image-8),
 ::view-transition-old(exercise-image-9),
 ::view-transition-old(action-area) {
-  animation: 180ms ease-out vt-fade-out;
+  animation: 200ms ease-out vt-fade-out both;
   mix-blend-mode: normal;
 }
 
@@ -745,17 +745,17 @@ input[type='number']:focus {
 ::view-transition-new(exercise-image-8),
 ::view-transition-new(exercise-image-9),
 ::view-transition-new(action-area) {
-  animation: 220ms ease-in 180ms vt-fade-in;
+  animation: 200ms ease-in vt-fade-in both;
   mix-blend-mode: normal;
 }
 
-/* next-preview: fade + slide when appearing/disappearing */
+/* next-preview: fade + slide, simultaneous, NO delay, both fill-mode */
 ::view-transition-old(next-preview) {
-  animation: 180ms ease-out vt-fade-slide-out;
+  animation: 200ms ease-out vt-fade-slide-out both;
   mix-blend-mode: normal;
 }
 
 ::view-transition-new(next-preview) {
-  animation: 220ms ease-in 180ms vt-fade-slide-in;
+  animation: 200ms ease-in vt-fade-slide-in both;
   mix-blend-mode: normal;
 }
