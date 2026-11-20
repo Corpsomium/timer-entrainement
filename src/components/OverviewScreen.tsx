@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import type { SessionState, Exercise, ExerciseIllustration } from '../types';
 import { formatLoad } from '../utils/formatters';
 import { saveRest } from '../utils/storage';
+import { Lightbox } from './Lightbox';
 
 interface OverviewScreenProps {
   state: SessionState;
@@ -132,6 +134,7 @@ export function OverviewScreen({
                   exercise={item.exercise}
                   index={item.index}
                   illustration={getIllustration(item.exercise.name)}
+                  onImageChange={() => setState((prev) => ({ ...prev, screen: 'input' }))}
                 />
               ))}
             </div>
@@ -141,6 +144,7 @@ export function OverviewScreen({
               exercise={group.exercises[0].exercise}
               index={group.exercises[0].index}
               illustration={getIllustration(group.exercises[0].exercise.name)}
+              onImageChange={() => setState((prev) => ({ ...prev, screen: 'input' }))}
             />
           )
         )}
@@ -176,27 +180,125 @@ function ExerciseCard({
   exercise,
   index,
   illustration,
+  onImageChange,
 }: {
   exercise: Exercise;
   index: number;
   illustration: ExerciseIllustration | null;
+  onImageChange: () => void;
 }) {
-  // Use primaryFrame if set, otherwise use frame 0
+  const [expanded, setExpanded] = useState(false);
+  const [lightbox, setLightbox] = useState<{ images: string[]; name: string } | null>(null);
+  
   const frameIndex = illustration?.primaryFrame ?? 0;
   const thumbnailImage = illustration?.imageUrls?.[frameIndex];
 
+  const handleToggle = () => {
+    setExpanded((prev) => !prev);
+  };
+
+  const handleImageClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (illustration?.imageUrls && illustration.imageUrls.length > 0) {
+      setLightbox({ images: illustration.imageUrls, name: exercise.name });
+    }
+  };
+
   return (
-    <div className="card ex-card">
-      {thumbnailImage ? (
-        <img src={thumbnailImage} alt={exercise.name} className="ex-thumbnail" />
-      ) : (
-        <div className="ex-num">{index + 1}</div>
-      )}
-      <div>
-        <h3>{exercise.name}</h3>
-        <p>{formatLoad(exercise)}</p>
+    <>
+      <div 
+        className={`card ex-card ${expanded ? 'ex-card-expanded' : ''}`}
+        onClick={handleToggle}
+        style={{ cursor: 'pointer' }}
+      >
+        <div className="ex-card-header">
+          {thumbnailImage ? (
+            <img 
+              src={thumbnailImage} 
+              alt={exercise.name} 
+              className="ex-thumbnail"
+              onClick={handleImageClick}
+            />
+          ) : (
+            <div className="ex-num">{index + 1}</div>
+          )}
+          <div className="ex-card-info">
+            <h3>{exercise.name}</h3>
+            <p>{formatLoad(exercise)}</p>
+          </div>
+          <div className="pill">{exercise.sets} sér.</div>
+          <button 
+            className="expand-icon"
+            aria-label={expanded ? 'Réduire' : 'Développer'}
+            aria-expanded={expanded}
+          >
+            {expanded ? '−' : '+'}
+          </button>
+        </div>
+
+        {expanded && (
+          <div className="ex-card-details">
+            {illustration?.imageUrls && illustration.imageUrls.length > 0 && (
+              <div className="ex-expanded-images">
+                {illustration.imageUrls.map((url, i) => (
+                  <div key={i} className="ex-expanded-image-wrapper">
+                    <img
+                      src={url}
+                      alt={`${exercise.name} - ${i === 0 ? 'départ' : 'fin'}`}
+                      className="ex-expanded-image"
+                      onClick={handleImageClick}
+                    />
+                    <div className="ex-frame-label">
+                      {i === 0 ? 'départ' : 'fin'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="ex-expanded-info">
+              <div className="ex-detail-row">
+                <span className="ex-detail-label">Séries</span>
+                <span className="ex-detail-value">{exercise.sets}</span>
+              </div>
+              <div className="ex-detail-row">
+                <span className="ex-detail-label">Répétitions</span>
+                <span className="ex-detail-value">{exercise.reps}</span>
+              </div>
+              {exercise.weight && (
+                <div className="ex-detail-row">
+                  <span className="ex-detail-label">Charge</span>
+                  <span className="ex-detail-value">{exercise.weight}</span>
+                </div>
+              )}
+              {exercise.supersetTag && (
+                <div className="superset-tag-pill">
+                  Superset {exercise.supersetTag}
+                </div>
+              )}
+            </div>
+
+            <button 
+              className="btn btn-ghost btn-change-image"
+              onClick={(e) => {
+                e.stopPropagation();
+                onImageChange();
+              }}
+            >
+              Changer l'image
+            </button>
+          </div>
+        )}
       </div>
-      <div className="pill">{exercise.sets} sér.</div>
-    </div>
+
+      {lightbox && (
+        <Lightbox
+          images={lightbox.images}
+          labels={['départ', 'fin']}
+          exerciseName={lightbox.name}
+          onClose={() => setLightbox(null)}
+        />
+      )}
+    </>
   );
 }
