@@ -44,6 +44,15 @@
     "name": "Band Pull Apart",
     "chosenAt": 1700000000000
   },
+  "pullapart": {
+    "exerciseId": "Band_Pull_Apart",
+    "imageUrls": [
+      "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Band_Pull_Apart/0.jpg",
+      "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Band_Pull_Apart/1.jpg"
+    ],
+    "name": "Band Pull Apart",
+    "chosenAt": 1700000000000
+  },
   "extensions mollets": {
     "exerciseId": "Standing_Calf_Raises",
     "imageUrls": [
