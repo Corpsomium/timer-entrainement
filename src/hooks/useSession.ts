@@ -101,61 +101,95 @@ export function useSession() {
     }
   }, []);
 
-  const tickTimer = useCallback(() => {
+  useEffect(() => {
     if (state.phase !== 'work' && state.phase !== 'rest') {
       stopTimer();
       return;
     }
 
-    const remaining = (state.endsAt || 0) - Date.now();
-    if (remaining <= 0) {
-      if (!beepFlagsRef.current[0]) {
-        beepFlagsRef.current[0] = true;
-        stopTimer();
-        beepEnd();
-        if (state.phase === 'work') {
-          finishSet();
-        } else {
-          finishRest();
+    const checkTimer = () => {
+      const remaining = (state.endsAt || 0) - Date.now();
+      
+      if (remaining <= 0) {
+        if (!beepFlagsRef.current[0]) {
+          beepFlagsRef.current[0] = true;
+          stopTimer();
+          beepEnd();
+          
+          if (state.phase === 'work') {
+            const currentStep = sequence[state.stepIndex];
+            if (!currentStep || currentStep.type !== 'exercise') return;
+
+            const nextStepIndex = state.stepIndex + 1;
+            const nextStep = sequence[nextStepIndex];
+
+            if (!nextStep) {
+              setState((prev) => ({
+                ...prev,
+                screen: 'done',
+                phase: 'ready',
+                finishedAt: Date.now(),
+                endsAt: null,
+                timerStartedAt: null,
+              }));
+              releaseWakeLock();
+              return;
+            }
+
+            if (nextStep.type === 'rest') {
+              setState((prev) => ({
+                ...prev,
+                completedSets: prev.completedSets + 1,
+                stepIndex: nextStepIndex,
+                phase: 'rest',
+                timerStartedAt: Date.now(),
+                endsAt: Date.now() + state.restSec * 1000,
+              }));
+              beepFlagsRef.current = { 3: false, 2: false, 1: false, 0: false };
+            } else {
+              setState((prev) => ({
+                ...prev,
+                completedSets: prev.completedSets + 1,
+                stepIndex: nextStepIndex,
+                phase: 'ready',
+                endsAt: null,
+                timerStartedAt: null,
+              }));
+            }
+          } else {
+            const nextStepIndex = state.stepIndex + 1;
+            setState((prev) => ({
+              ...prev,
+              stepIndex: nextStepIndex,
+              phase: 'ready',
+              endsAt: null,
+              timerStartedAt: null,
+            }));
+          }
+        }
+        return;
+      }
+
+      const sec = Math.ceil(remaining / 1000);
+      if (sec >= 1 && sec <= 3 && !beepFlagsRef.current[sec as 1 | 2 | 3]) {
+        beepFlagsRef.current[sec as 1 | 2 | 3] = true;
+        beepCountdown();
+        if (navigator.vibrate) {
+          try {
+            navigator.vibrate(40);
+          } catch (e) {}
         }
       }
-      return;
-    }
+    };
 
-    const sec = Math.ceil(remaining / 1000);
-    if (sec >= 1 && sec <= 3 && !beepFlagsRef.current[sec as 1 | 2 | 3]) {
-      beepFlagsRef.current[sec as 1 | 2 | 3] = true;
-      beepCountdown();
-      if (navigator.vibrate) {
-        try {
-          navigator.vibrate(40);
-        } catch (e) {}
-      }
-    }
-  }, [state.phase, state.endsAt, stopTimer]);
+    const intervalId = window.setInterval(checkTimer, 200);
+    timerIntervalRef.current = intervalId;
 
-  const startTimer = useCallback(
-    (ms: number) => {
-      const now = Date.now();
-      setState((prev) => ({
-        ...prev,
-        timerStartedAt: now,
-        endsAt: now + ms,
-      }));
-      beepFlagsRef.current = { 3: false, 2: false, 1: false, 0: false };
-
-      stopTimer();
-      timerIntervalRef.current = window.setInterval(tickTimer, 200);
-    },
-    [stopTimer, tickTimer]
-  );
-
-  useEffect(() => {
-    if (state.phase === 'work' || state.phase === 'rest') {
-      timerIntervalRef.current = window.setInterval(tickTimer, 200);
-      return () => stopTimer();
-    }
-  }, [state.phase, tickTimer, stopTimer]);
+    return () => {
+      clearInterval(intervalId);
+      timerIntervalRef.current = null;
+    };
+  }, [state.phase, state.endsAt, state.stepIndex, state.restSec, sequence, stopTimer]);
 
   useEffect(() => {
     if (state.screen === 'session') {
@@ -233,13 +267,16 @@ export function useSession() {
     }
 
     if (nextStep.type === 'rest') {
+      const now = Date.now();
       setState((prev) => ({
         ...prev,
         completedSets: prev.completedSets + 1,
         stepIndex: nextStepIndex,
         phase: 'rest',
+        timerStartedAt: now,
+        endsAt: now + state.restSec * 1000,
       }));
-      startTimer(state.restSec * 1000);
+      beepFlagsRef.current = { 3: false, 2: false, 1: false, 0: false };
     } else {
       setState((prev) => ({
         ...prev,
@@ -250,7 +287,7 @@ export function useSession() {
         timerStartedAt: null,
       }));
     }
-  }, [state.stepIndex, state.restSec, sequence, stopTimer, startTimer]);
+  }, [state.stepIndex, state.restSec, sequence, stopTimer]);
 
   const finishRest = useCallback(() => {
     stopTimer();
@@ -272,9 +309,16 @@ export function useSession() {
     const ex = state.exercises[currentStep.exerciseIndex!];
     if (!ex || ex.durationSec == null) return;
 
-    setState((prev) => ({ ...prev, phase: 'work' }));
-    startTimer(ex.durationSec * 1000);
-  }, [state.stepIndex, state.exercises, sequence, startTimer]);
+    const now = Date.now();
+    const duration = ex.durationSec;
+    setState((prev) => ({
+      ...prev,
+      phase: 'work',
+      timerStartedAt: now,
+      endsAt: now + duration * 1000,
+    }));
+    beepFlagsRef.current = { 3: false, 2: false, 1: false, 0: false };
+  }, [state.stepIndex, state.exercises, sequence]);
 
   const adjustTimer = useCallback(
     (deltaSec: number) => {

@@ -273,7 +273,7 @@ function ReadyPhase({
 
     const interval = setInterval(() => {
       setImageIndex((prev) => (prev + 1) % illustration.imageUrls.length);
-    }, 2000);
+    }, 800);
 
     return () => clearInterval(interval);
   }, [illustration]);

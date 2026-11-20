@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from './hooks/useSession';
 import { useIllustrations } from './hooks/useIllustrations';
 import { InputScreen } from './components/InputScreen';
@@ -6,6 +6,7 @@ import { OverviewScreen } from './components/OverviewScreen';
 import { SessionScreen } from './components/SessionScreen';
 import { DoneScreen } from './components/DoneScreen';
 import { shareUrl } from './utils/storage';
+import { ensureAudio } from './utils/audio';
 
 function App() {
   const {
@@ -25,6 +26,22 @@ function App() {
 
   const { getIllustration } = useIllustrations(state.exercises);
   const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unlockAudio = () => {
+      ensureAudio();
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
+
+    return () => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+  }, []);
 
   const showToast = (msg: string) => {
     setToast(msg);
