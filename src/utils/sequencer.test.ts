@@ -122,4 +122,53 @@ Ex2 : 2x10`;
     const restSteps = sequence.filter((s) => s.type === 'rest');
     expect(restSteps.length).toBe(0);
   });
+
+  it('should place rest after superset round and preview next round start', () => {
+    const block = `Pull-apart : 3x15 setA
+Extensions mollets : 3x15 setA`;
+
+    const { exercises } = parseWorkout(block);
+    const sequence = buildSequence(exercises, 60);
+
+    // Round 1: Pull-apart (index 0) → Extensions mollets (index 1) → REST (index 2)
+    expect(sequence[0].type).toBe('exercise');
+    expect(exercises[sequence[0].exerciseIndex!].name).toBe('Pull-apart');
+    expect(sequence[0].supersetRound).toBe(1);
+
+    expect(sequence[1].type).toBe('exercise');
+    expect(exercises[sequence[1].exerciseIndex!].name).toBe('Extensions mollets');
+    expect(sequence[1].supersetRound).toBe(1);
+
+    // After tour 1 completes, there should be REST
+    expect(sequence[2].type).toBe('rest');
+    // The next exercise preview should point to Pull-apart (start of round 2)
+    expect(sequence[2].nextExercise).toBeDefined();
+    expect(sequence[2].nextExercise!.name).toBe('Pull-apart');
+    expect(sequence[2].nextExercise!.setIndex).toBe(1); // round 2 = setIndex 1
+
+    // Round 2: Pull-apart (index 3) → Extensions mollets (index 4) → REST (index 5)
+    expect(sequence[3].type).toBe('exercise');
+    expect(exercises[sequence[3].exerciseIndex!].name).toBe('Pull-apart');
+    expect(sequence[3].supersetRound).toBe(2);
+
+    expect(sequence[4].type).toBe('exercise');
+    expect(exercises[sequence[4].exerciseIndex!].name).toBe('Extensions mollets');
+    expect(sequence[4].supersetRound).toBe(2);
+
+    expect(sequence[5].type).toBe('rest');
+    expect(sequence[5].nextExercise!.name).toBe('Pull-apart');
+    expect(sequence[5].nextExercise!.setIndex).toBe(2); // round 3 = setIndex 2
+
+    // Round 3: Pull-apart (index 6) → Extensions mollets (index 7) → NO REST (end of session)
+    expect(sequence[6].type).toBe('exercise');
+    expect(exercises[sequence[6].exerciseIndex!].name).toBe('Pull-apart');
+    expect(sequence[6].supersetRound).toBe(3);
+
+    expect(sequence[7].type).toBe('exercise');
+    expect(exercises[sequence[7].exerciseIndex!].name).toBe('Extensions mollets');
+    expect(sequence[7].supersetRound).toBe(3);
+
+    // No rest after last set
+    expect(sequence.length).toBe(8);
+  });
 });
