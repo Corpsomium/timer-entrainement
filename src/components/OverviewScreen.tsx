@@ -150,7 +150,8 @@ export function OverviewScreen({
         )}
       </div>
 
-      <div className="actions">
+      <div className="actions-sticky-spacer" />
+      <div className="actions actions-sticky">
         {midSession ? (
           <>
             <button className="btn btn-primary" onClick={onResume}>

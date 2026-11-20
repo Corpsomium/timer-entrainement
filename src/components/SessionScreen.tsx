@@ -193,11 +193,12 @@ function RestPhase({
         </div>
       )}
 
-      <div className="adj">
+      <div className="actions-sticky-spacer" />
+      <div className="adj actions-sticky">
         <button className="btn btn-ghost" onClick={() => onAdjustTimer(-15)}>
           −15 s
         </button>
-        <button className="btn btn-orange" onClick={handleSkipRest}>
+        <button className="btn btn-ghost" onClick={handleSkipRest}>
           Passer
         </button>
         <button className="btn btn-ghost" onClick={() => onAdjustTimer(15)}>
@@ -266,7 +267,8 @@ function WorkPhase({
         </button>
       </div>
 
-      <div className="actions">
+      <div className="actions-sticky-spacer" />
+      <div className="actions actions-sticky">
         <button className="btn btn-primary" onClick={handleCompleteSet}>
           Terminer la série
         </button>
@@ -374,17 +376,23 @@ function ReadyPhase({
       )}
 
       {ex.durationSec != null ? (
-        <div className="actions" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
-          <button className="btn btn-primary" onClick={handleStartWork}>
-            Démarrer
-          </button>
-        </div>
+        <>
+          <div className="actions-sticky-spacer" />
+          <div className="actions actions-sticky" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
+            <button className="btn btn-primary" onClick={handleStartWork}>
+              Démarrer
+            </button>
+          </div>
+        </>
       ) : (
-        <div className="actions" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
-          <button className="btn btn-primary" onClick={handleCompleteSet}>
-            Série terminée
-          </button>
-        </div>
+        <>
+          <div className="actions-sticky-spacer" />
+          <div className="actions actions-sticky" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
+            <button className="btn btn-primary" onClick={handleCompleteSet}>
+              Série terminée
+            </button>
+          </div>
+        </>
       )}
     </>
   );
