@@ -1337,8 +1337,12 @@ input[type='number']:focus {
   background: var(--card);
   border: 2px solid transparent;
   border-radius: var(--radius-md);
-  overflow: hidden;
+  overflow: clip;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-self: start;
+  height: auto;
   transition: border-color 150ms ease, transform 150ms ease, background-color 150ms ease;
 }
 
@@ -1359,10 +1363,12 @@ input[type='number']:focus {
   grid-template-columns: 1fr;
   gap: 2px;
   background: #141414;
+  width: 100%;
   aspect-ratio: 4 / 3;
+  flex-shrink: 0;
 }
 
-.image-picker-tile[data-frames="2"] {
+.image-picker-tile[data-frames='2'] {
   grid-template-columns: 1fr 1fr;
 }
 
@@ -1370,16 +1376,18 @@ input[type='number']:focus {
   position: relative;
   min-width: 0;
   min-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 100%;
   background: #1a1a1a;
+  overflow: hidden;
 }
 
 .image-picker-thumbnail {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
+  object-position: center;
   display: block;
 }
 
@@ -1387,6 +1395,7 @@ input[type='number']:focus {
   position: absolute;
   bottom: 4px;
   inset-inline-start: 4px;
+  z-index: 1;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1400,16 +1409,17 @@ input[type='number']:focus {
 
 .image-picker-card-name {
   padding: var(--space-2);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   text-align: center;
-  color: var(--muted);
+  color: var(--text);
   line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+  flex-shrink: 0;
 }
 
 .image-picker-frames {
