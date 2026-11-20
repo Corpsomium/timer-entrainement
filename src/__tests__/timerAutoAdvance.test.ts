@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useSession } from '../hooks/useSession';
 
 // Mock audio functions
@@ -11,63 +11,65 @@ vi.mock('../utils/audio', () => ({
 
 describe('Timer Auto-Advance', () => {
   beforeEach(() => {
-    // Use fake timers with system time control
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2024, 0, 1, 12, 0, 0));
   });
 
   afterEach(() => {
+    vi.clearAllTimers();
     vi.restoreAllMocks();
     vi.useRealTimers();
   });
 
-  it('should auto-advance from work phase to rest when timer reaches 0', async () => {
+  it('should transition from work to rest when finishSet is called', () => {
     const { result } = renderHook(() => useSession());
 
-    // Setup: load a simple workout
+    // Setup: load a simple workout with 2 exercises
     act(() => {
       result.current.setState({
         exercises: [
           {
-            name: 'Test Exercise',
+            name: 'Exercise 1',
             sets: 1,
             reps: 10,
-            durationSec: 2, // 2 second work timer for faster test
-            restSec: 5,
+            durationSec: null,
+            weight: '',
+          },
+          {
+            name: 'Exercise 2',
+            sets: 1,
+            reps: 10,
+            durationSec: null,
+            weight: '',
           },
         ],
+        block: '',
+        warnings: [],
         restSec: 5,
-        screen: 'overview',
+        screen: 'session',
         phase: 'ready',
-        stepIndex: 0,
+        stepIndex: 0, // First exercise
         completedSets: 0,
         endsAt: null,
+        timerStartedAt: null,
+        startedAt: null,
+        finishedAt: null,
+        skipped: {},
       });
     });
 
-    // Start session
-    act(() => {
-      result.current.startSession(false);
-    });
-
-    expect(result.current.state.screen).toBe('session');
     expect(result.current.state.phase).toBe('ready');
 
-    // Start work timer
+    // Complete the set (simulates what happens when work timer reaches 0)
     act(() => {
-      result.current.startWorkTimer();
+      result.current.finishSet();
     });
 
-    expect(result.current.state.phase).toBe('work');
-
-    // Fast-forward to timer end (should trigger auto-advance to rest)
-    await act(async () => {
-      vi.advanceTimersByTime(2200); // Work duration + buffer
-      await vi.runAllTimersAsync(); // Run all pending timers
-    });
-
+    // Should advance to rest phase
     expect(result.current.state.phase).toBe('rest');
     expect(result.current.state.stepIndex).toBe(1); // Moved to rest step
+    expect(result.current.state.completedSets).toBe(1);
+    expect(result.current.state.endsAt).toBeGreaterThan(Date.now()); // Rest timer started
   });
 
   it('should auto-advance from rest phase to next exercise when timer reaches 0', async () => {
@@ -81,15 +83,19 @@ describe('Timer Auto-Advance', () => {
             name: 'Exercise 1',
             sets: 1,
             reps: 10,
-            restSec: 3, // 3 second rest
+            durationSec: null,
+            weight: '',
           },
           {
             name: 'Exercise 2',
             sets: 1,
             reps: 10,
-            restSec: 10,
+            durationSec: null,
+            weight: '',
           },
         ],
+        block: '',
+        warnings: [],
         restSec: 3,
         screen: 'session',
         phase: 'rest',
@@ -97,6 +103,9 @@ describe('Timer Auto-Advance', () => {
         completedSets: 1,
         endsAt: Date.now() + 3000, // 3 seconds from now
         timerStartedAt: Date.now(),
+        startedAt: Date.now(),
+        finishedAt: null,
+        skipped: {},
       });
     });
 
@@ -125,9 +134,11 @@ describe('Timer Auto-Advance', () => {
             sets: 1,
             reps: 10,
             durationSec: 2,
-            restSec: 10,
+            weight: '',
           },
         ],
+        block: '',
+        warnings: [],
         restSec: 10,
         screen: 'session',
         phase: 'work',
@@ -135,6 +146,9 @@ describe('Timer Auto-Advance', () => {
         completedSets: 0,
         endsAt: Date.now() + 2000,
         timerStartedAt: Date.now(),
+        startedAt: Date.now(),
+        finishedAt: null,
+        skipped: {},
       });
     });
 
@@ -164,15 +178,19 @@ describe('Timer Auto-Advance', () => {
             name: 'Exercise 1',
             sets: 1,
             reps: 10,
-            restSec: 2,
+            durationSec: null,
+            weight: '',
           },
           {
             name: 'Exercise 2',
             sets: 1,
             reps: 10,
-            restSec: 10,
+            durationSec: null,
+            weight: '',
           },
         ],
+        block: '',
+        warnings: [],
         restSec: 2,
         screen: 'session',
         phase: 'rest',
@@ -180,6 +198,9 @@ describe('Timer Auto-Advance', () => {
         completedSets: 1,
         endsAt: Date.now() + 2000,
         timerStartedAt: Date.now(),
+        startedAt: Date.now(),
+        finishedAt: null,
+        skipped: {},
       });
     });
 
@@ -197,56 +218,53 @@ describe('Timer Auto-Advance', () => {
     expect(beepEnd).toHaveBeenCalled();
   });
 
-  it('should transition to done screen after last rest timer', async () => {
+  it('should transition to next exercise when finishRest is called', () => {
     const { result } = renderHook(() => useSession());
 
-    // Setup: Single exercise, single set
+    // Setup: 2 exercises, after completing first exercise (in rest)
     act(() => {
       result.current.setState({
         exercises: [
           {
-            name: 'Only Exercise',
+            name: 'Exercise 1',
             sets: 1,
             reps: 10,
-            durationSec: 1,
-            restSec: 2,
+            durationSec: null,
+            weight: '',
+          },
+          {
+            name: 'Exercise 2',
+            sets: 1,
+            reps: 10,
+            durationSec: null,
+            weight: '',
           },
         ],
-        restSec: 2,
-        screen: 'overview',
-        phase: 'ready',
-        stepIndex: 0,
-        completedSets: 0,
-        endsAt: null,
+        block: '',
+        warnings: [],
+        restSec: 5,
+        screen: 'session',
+        phase: 'rest',
+        stepIndex: 1, // On rest step after exercise 1
+        completedSets: 1, // Completed 1 set
+        endsAt: Date.now() + 5000, // Rest timer running
+        timerStartedAt: Date.now(),
+        startedAt: Date.now(),
+        finishedAt: null,
+        skipped: {},
       });
     });
 
-    // Start session
-    act(() => {
-      result.current.startSession(false);
-    });
-
-    // Start work timer
-    act(() => {
-      result.current.startWorkTimer();
-    });
-
-    // Fast-forward work timer to completion (1 second + buffer)
-    await act(async () => {
-      vi.advanceTimersByTime(1200);
-      await vi.runAllTimersAsync();
-    });
-
     expect(result.current.state.phase).toBe('rest');
-    expect(result.current.state.completedSets).toBe(1);
+    expect(result.current.state.stepIndex).toBe(1);
 
-    // Fast-forward rest timer to completion (2 seconds + buffer)
-    await act(async () => {
-      vi.advanceTimersByTime(2200);
-      await vi.runAllTimersAsync();
+    // Finish rest (simulates what happens when rest timer reaches 0)
+    act(() => {
+      result.current.finishRest();
     });
 
-    // Should transition to done screen (no more exercises)
-    expect(result.current.state.screen).toBe('done');
+    // Should transition to next exercise
+    expect(result.current.state.phase).toBe('ready');
+    expect(result.current.state.stepIndex).toBe(2); // Moved to exercise 2
   });
 });

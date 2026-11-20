@@ -177,12 +177,14 @@ function ExerciseCard({
   index: number;
   illustration: ExerciseIllustration | null;
 }) {
-  const firstImage = illustration?.imageUrls?.[0];
+  // Use primaryFrame if set, otherwise use frame 0
+  const frameIndex = illustration?.primaryFrame ?? 0;
+  const thumbnailImage = illustration?.imageUrls?.[frameIndex];
 
   return (
     <div className="card ex-card">
-      {firstImage ? (
-        <img src={firstImage} alt={exercise.name} className="ex-thumbnail" />
+      {thumbnailImage ? (
+        <img src={thumbnailImage} alt={exercise.name} className="ex-thumbnail" />
       ) : (
         <div className="ex-num">{index + 1}</div>
       )}

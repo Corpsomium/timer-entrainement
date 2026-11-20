@@ -597,6 +597,45 @@ input[type='number']:focus {
   background: #222;
 }
 
+/* Dual frame display (side by side) */
+.dual-frame {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px auto;
+  max-width: 360px;
+}
+
+.frame-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.ex-img-dual {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: #222;
+}
+
+.frame-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.frame-arrow {
+  font-size: 20px;
+  color: var(--lime);
+  flex-shrink: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .bar > i {
     transition: none;
