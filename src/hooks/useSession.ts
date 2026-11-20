@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { SessionState, SequenceStep } from '../types';
 import { parseWorkout } from '../utils/parser';
 import { buildSequence } from '../utils/sequencer';
+import { withViewTransition } from '../utils/viewTransition';
 import {
   loadBlock,
   saveBlock,
@@ -124,47 +125,55 @@ export function useSession() {
             const nextStep = sequence[nextStepIndex];
 
             if (!nextStep) {
-              setState((prev) => ({
-                ...prev,
-                screen: 'done',
-                phase: 'ready',
-                finishedAt: Date.now(),
-                endsAt: null,
-                timerStartedAt: null,
-              }));
+              withViewTransition(() => {
+                setState((prev) => ({
+                  ...prev,
+                  screen: 'done',
+                  phase: 'ready',
+                  finishedAt: Date.now(),
+                  endsAt: null,
+                  timerStartedAt: null,
+                }));
+              });
               releaseWakeLock();
               return;
             }
 
             if (nextStep.type === 'rest') {
-              setState((prev) => ({
-                ...prev,
-                completedSets: prev.completedSets + 1,
-                stepIndex: nextStepIndex,
-                phase: 'rest',
-                timerStartedAt: Date.now(),
-                endsAt: Date.now() + state.restSec * 1000,
-              }));
+              withViewTransition(() => {
+                setState((prev) => ({
+                  ...prev,
+                  completedSets: prev.completedSets + 1,
+                  stepIndex: nextStepIndex,
+                  phase: 'rest',
+                  timerStartedAt: Date.now(),
+                  endsAt: Date.now() + state.restSec * 1000,
+                }));
+              });
               beepFlagsRef.current = { 3: false, 2: false, 1: false, 0: false };
             } else {
+              withViewTransition(() => {
+                setState((prev) => ({
+                  ...prev,
+                  completedSets: prev.completedSets + 1,
+                  stepIndex: nextStepIndex,
+                  phase: 'ready',
+                  endsAt: null,
+                  timerStartedAt: null,
+                }));
+              });
+            }
+          } else {
+            const nextStepIndex = state.stepIndex + 1;
+            withViewTransition(() => {
               setState((prev) => ({
                 ...prev,
-                completedSets: prev.completedSets + 1,
                 stepIndex: nextStepIndex,
                 phase: 'ready',
                 endsAt: null,
                 timerStartedAt: null,
               }));
-            }
-          } else {
-            const nextStepIndex = state.stepIndex + 1;
-            setState((prev) => ({
-              ...prev,
-              stepIndex: nextStepIndex,
-              phase: 'ready',
-              endsAt: null,
-              timerStartedAt: null,
-            }));
+            });
           }
         }
         return;
