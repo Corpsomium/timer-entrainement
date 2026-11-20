@@ -356,94 +356,98 @@ function ReadyPhase({
     kicker = `Superset ${currentStep.supersetTag} · tour ${currentStep.supersetRound}/${currentStep.supersetTotal}`;
   }
 
+  const imageUrls = illustration?.imageUrls?.filter(Boolean) ?? [];
+  const hasImages = imageUrls.length > 0;
+
   return (
-    <>
-      <div className="hero-ex" style={{ viewTransitionName: 'exercise-header', position: 'relative' } as React.CSSProperties}>
-        <div className="kicker">{kicker}</div>
-        <h2>{ex.name}</h2>
-        <button
-          className="btn-edit-image"
-          onClick={() => setLightbox({ images: [], name: '' })}
-          onClickCapture={(e) => {
-            e.stopPropagation();
-            setPickerExercise(ex);
-          }}
-          title="Changer l'image"
-          aria-label="Changer l'image"
-        >
-          ✎
-        </button>
-        <div className="set-badge">
-          Série {setNum}/{totalSets}
-        </div>
-        <div className="meta-line">
-          <strong>
-            {ex.durationSec != null ? formatDurationLabel(ex.durationSec) : `${ex.reps} reps`}
-          </strong>
-          {ex.weight && ` · ${ex.weight}`}
-        </div>
-      </div>
-
-      {illustration && illustration.imageUrls.length >= 2 && (
-        <div 
-          className="dual-frame"
-          style={{ viewTransitionName: `exercise-image-${currentExIndex}`, cursor: 'pointer' } as React.CSSProperties}
-          onClick={() => {
-            if (illustration.imageUrls.length >= 2) {
-              setLightbox({ images: illustration.imageUrls, name: ex.name });
-            }
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              if (illustration.imageUrls.length >= 2) {
-                setLightbox({ images: illustration.imageUrls, name: ex.name });
+    <div className="session-layout">
+      {hasImages && (
+        <div className="session-images">
+          <div
+            className="dual-frame"
+            style={{ viewTransitionName: `exercise-image-${currentExIndex}`, cursor: 'pointer' } as React.CSSProperties}
+            onClick={() => setLightbox({ images: imageUrls, name: ex.name })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setLightbox({ images: imageUrls, name: ex.name });
               }
-            }
-          }}
-          role="button"
-          tabIndex={0}
-          aria-label="Agrandir les images"
-        >
-          <div className="frame-item">
-            <img
-              src={illustration.imageUrls[0]}
-              alt={`${ex.name} - départ`}
-              className="ex-img-dual"
-            />
-            <div className="frame-label">départ</div>
-          </div>
-          <div className="frame-arrow">→</div>
-          <div className="frame-item">
-            <img
-              src={illustration.imageUrls[1]}
-              alt={`${ex.name} - fin`}
-              className="ex-img-dual"
-            />
-            <div className="frame-label">fin</div>
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label="Agrandir les images"
+          >
+            <div className="frame-item">
+              <img
+                src={imageUrls[0]}
+                alt={`${ex.name} - départ`}
+                className="ex-img-dual"
+              />
+              {imageUrls.length > 1 && <div className="frame-label">départ</div>}
+            </div>
+            {imageUrls.length > 1 && (
+              <>
+                <div className="frame-arrow" aria-hidden>
+                  →
+                </div>
+                <div className="frame-item">
+                  <img
+                    src={imageUrls[1]}
+                    alt={`${ex.name} - fin`}
+                    className="ex-img-dual"
+                  />
+                  <div className="frame-label">fin</div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
 
-      {ex.durationSec != null ? (
-        <>
-          <div className="actions-sticky-spacer" />
-          <div className="actions actions-sticky" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
-            <button className="btn btn-primary" onClick={handleStartWork}>
-              Démarrer
-            </button>
+      <div className="session-info-actions">
+        <div className="hero-ex" style={{ viewTransitionName: 'exercise-header', position: 'relative' } as React.CSSProperties}>
+          <div className="kicker">{kicker}</div>
+          <h2>{ex.name}</h2>
+          <button
+            className="btn-edit-image"
+            type="button"
+            onClick={() => setPickerExercise(ex)}
+            title="Changer l'image"
+            aria-label="Changer l'image"
+          >
+            ✎
+          </button>
+          <div className="set-badge">
+            Série {setNum}/{totalSets}
           </div>
-        </>
-      ) : (
-        <>
-          <div className="actions-sticky-spacer" />
-          <div className="actions actions-sticky" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
-            <button className="btn btn-primary" onClick={handleCompleteSet}>
-              Série terminée
-            </button>
+          <div className="meta-line">
+            <strong>
+              {ex.durationSec != null ? formatDurationLabel(ex.durationSec) : `${ex.reps} reps`}
+            </strong>
+            {ex.weight && ` · ${ex.weight}`}
           </div>
-        </>
-      )}
-    </>
+        </div>
+
+        {ex.durationSec != null ? (
+          <>
+            <div className="actions-sticky-spacer" />
+            <div className="actions actions-sticky" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
+              <button className="btn btn-primary" onClick={handleStartWork}>
+                Démarrer
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="actions-sticky-spacer" />
+            <div className="actions actions-sticky" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
+              <button className="btn btn-primary" onClick={handleCompleteSet}>
+                Série terminée
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }

@@ -19,6 +19,26 @@
     "primaryFrame": 1,
     "chosenAt": 1700000000000
   },
+  "developpe couche": {
+    "exerciseId": "Barbell_Bench_Press_-_Medium_Grip",
+    "imageUrls": [
+      "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Bench_Press_-_Medium_Grip/0.jpg",
+      "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Bench_Press_-_Medium_Grip/1.jpg"
+    ],
+    "name": "Barbell Bench Press - Medium Grip",
+    "primaryFrame": 1,
+    "chosenAt": 1700000000000
+  },
+  "developpe couche barre": {
+    "exerciseId": "Barbell_Bench_Press_-_Medium_Grip",
+    "imageUrls": [
+      "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Bench_Press_-_Medium_Grip/0.jpg",
+      "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Bench_Press_-_Medium_Grip/1.jpg"
+    ],
+    "name": "Barbell Bench Press - Medium Grip",
+    "primaryFrame": 1,
+    "chosenAt": 1700000000000
+  },
   "rowing penche": {
     "exerciseId": "Bent_Over_Barbell_Row",
     "imageUrls": [

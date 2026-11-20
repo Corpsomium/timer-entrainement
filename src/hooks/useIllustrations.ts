@@ -33,28 +33,27 @@ export function useIllustrations(exercises: Exercise[]) {
   useEffect(() => {
     if (loading || exercises.length === 0) return;
 
-    const updateHistory = async () => {
-      let updated = false;
-      const newHistory = { ...history };
+    let updated = false;
+    const newHistory = { ...history };
 
-      for (const ex of exercises) {
-        const normalized = normalizeExerciseName(ex.name);
-        if (!newHistory[normalized] || !newHistory[normalized].manual) {
-          const found = findExercise(ex.name);
-          if (found) {
-            newHistory[normalized] = found;
-            updated = true;
-          }
-        }
+    for (const ex of exercises) {
+      const normalized = normalizeExerciseName(ex.name);
+      const existing = newHistory[normalized];
+      // Keep manual choices; only auto-fill missing / empty slots
+      if (existing?.manual) continue;
+      if (existing?.imageUrls?.length) continue;
+
+      const found = findExercise(ex.name);
+      if (found) {
+        newHistory[normalized] = found;
+        updated = true;
       }
+    }
 
-      if (updated) {
-        setHistory(newHistory);
-        saveIllustrations(newHistory);
-      }
-    };
-
-    updateHistory();
+    if (updated) {
+      setHistory(newHistory);
+      saveIllustrations(newHistory);
+    }
   }, [exercises, loading, history]);
 
   const updateExerciseIllustration = (exerciseName: string, illustration: ExerciseIllustration) => {
