@@ -1611,8 +1611,9 @@ input[type='number']:focus {
     left: 0;
     right: 0;
     background: var(--bg);
-    padding: var(--space-3) var(--space-4);
-    padding-bottom: max(var(--space-3), var(--safe-b));
+    /* Extra bottom inset: home indicator + breathing room above mobile browser toolbars */
+    --sticky-pad-bottom: max(20px, var(--safe-b));
+    padding: var(--space-3) var(--space-4) var(--sticky-pad-bottom);
     border-top: 1px solid transparent;
     box-shadow:
       0 -1px 0 var(--line),
@@ -1621,20 +1622,19 @@ input[type='number']:focus {
   }
 
   /*
-   * Spacer must cover the tallest sticky footer:
-   * primary row (56) + gap (8) + secondary compact (44) + padding top/bottom + safe-area
+   * Spacer must cover the tallest session sticky footer:
+   * primary row (56) + gap (8) + secondary compact (44) + pad top + pad bottom + slack
    */
   .actions-sticky-spacer {
     height: calc(
-      var(--tap) + 44px + var(--space-2) + var(--space-3) + max(var(--space-3), var(--safe-b)) +
-        var(--space-2)
+      var(--tap) + 44px + var(--space-2) + var(--space-3) + max(20px, var(--safe-b)) + var(--space-3)
     );
   }
 
-  /* Overview sticky can be 2–3 stacked full buttons — keep a generous spacer */
+  /* Overview / done sticky can be 2–3 stacked full buttons */
   .overview-sticky-spacer,
   .actions-sticky-spacer.overview-sticky-spacer {
-    height: calc((var(--tap) * 3) + (10px * 2) + var(--space-3) + max(var(--space-3), var(--safe-b)));
+    height: calc((var(--tap) * 3) + (10px * 2) + var(--space-3) + max(20px, var(--safe-b)) + var(--space-2));
   }
 }
 
