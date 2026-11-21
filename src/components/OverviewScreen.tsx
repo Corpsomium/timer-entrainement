@@ -175,7 +175,7 @@ export function OverviewScreen({
         )}
       </div>
 
-      <div className="actions-sticky-spacer" />
+      <div className="actions-sticky-spacer overview-sticky-spacer" aria-hidden />
       <div className="actions actions-sticky">
         {midSession ? (
           <>
