@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { SessionState, Exercise, ExerciseIllustration } from '../types';
 import { formatLoad } from '../utils/formatters';
 import { saveRest } from '../utils/storage';
+import { getAudioMuteHint, unlockAudio } from '../utils/audio';
 import { Lightbox } from './Lightbox';
 import { ImagePicker } from './ImagePicker';
 
@@ -175,19 +176,39 @@ export function OverviewScreen({
         )}
       </div>
 
+      <p className="hint audio-hint">{getAudioMuteHint()}</p>
+
       <div className="actions-sticky-spacer overview-sticky-spacer" aria-hidden />
       <div className="actions actions-sticky">
         {midSession ? (
           <>
-            <button className="btn btn-primary" onClick={onResume}>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                unlockAudio();
+                onResume();
+              }}
+            >
               Reprendre la séance
             </button>
-            <button className="btn btn-ghost" onClick={onStart}>
+            <button
+              className="btn btn-ghost"
+              onClick={() => {
+                unlockAudio();
+                onStart();
+              }}
+            >
               Recommencer
             </button>
           </>
         ) : (
-          <button className="btn btn-primary" onClick={onStart}>
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              unlockAudio();
+              onStart();
+            }}
+          >
             Commencer
           </button>
         )}
