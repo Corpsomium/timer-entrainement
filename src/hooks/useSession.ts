@@ -15,7 +15,7 @@ import {
   updateHashBlock,
 } from '../utils/storage';
 import { requestWakeLock, releaseWakeLock } from '../utils/wakeLock';
-import { beepCountdown, beepEnd, ensureAudio } from '../utils/audio';
+import { beepCountdown, beepEnd, unlockAudio } from '../utils/audio';
 
 const DEFAULT_BLOCK = `Fentes arrière : 3x10 (2x10kg)
 Développé incliné : 3x12 (2x15kg)
@@ -249,7 +249,7 @@ export function useSession() {
       }));
 
       requestWakeLock();
-      ensureAudio();
+      unlockAudio();
     },
     [state.exercises.length]
   );
@@ -317,6 +317,8 @@ export function useSession() {
 
     const ex = state.exercises[currentStep.exerciseIndex!];
     if (!ex || ex.durationSec == null) return;
+
+    unlockAudio();
 
     const now = Date.now();
     const duration = ex.durationSec;

@@ -319,6 +319,13 @@ input[type='number']:focus {
   margin: 8px 0 14px;
 }
 
+.audio-hint {
+  margin: var(--space-3) 0 0;
+  font-size: 12px;
+  text-align: center;
+  opacity: 0.85;
+}
+
 .warn {
   background: #2a2308;
   border: 1px solid #5a4a10;

@@ -6,7 +6,7 @@ import { OverviewScreen } from './components/OverviewScreen';
 import { SessionScreen } from './components/SessionScreen';
 import { DoneScreen } from './components/DoneScreen';
 import { shareUrl } from './utils/storage';
-import { ensureAudio } from './utils/audio';
+import { unlockAudio } from './utils/audio';
 import { withViewTransition } from './utils/viewTransition';
 
 function App() {
@@ -29,18 +29,18 @@ function App() {
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
-    const unlockAudio = () => {
-      ensureAudio();
-      document.removeEventListener('click', unlockAudio);
-      document.removeEventListener('touchstart', unlockAudio);
+    const onFirstGesture = () => {
+      unlockAudio();
+      document.removeEventListener('click', onFirstGesture);
+      document.removeEventListener('touchstart', onFirstGesture);
     };
 
-    document.addEventListener('click', unlockAudio);
-    document.addEventListener('touchstart', unlockAudio);
+    document.addEventListener('click', onFirstGesture);
+    document.addEventListener('touchstart', onFirstGesture);
 
     return () => {
-      document.removeEventListener('click', unlockAudio);
-      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('click', onFirstGesture);
+      document.removeEventListener('touchstart', onFirstGesture);
     };
   }, []);
 
