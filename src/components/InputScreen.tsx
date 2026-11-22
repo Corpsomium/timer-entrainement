@@ -1,17 +1,42 @@
+import { useRef } from 'react';
 import type { SessionState, ParseWarning } from '../types';
+import { getBuildLabel } from '../utils/buildInfo';
 
 interface InputScreenProps {
   state: SessionState;
   setState: React.Dispatch<React.SetStateAction<SessionState>>;
   onLoad: () => void;
   onShare: () => void;
+  onDebugGesture?: () => void;
 }
 
-export function InputScreen({ state, setState, onLoad, onShare }: InputScreenProps) {
+export function InputScreen({ state, setState, onLoad, onShare, onDebugGesture }: InputScreenProps) {
+  const longPressTimer = useRef<number | null>(null);
+
+  const clearLongPress = () => {
+    if (longPressTimer.current != null) {
+      window.clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const startLongPress = () => {
+    clearLongPress();
+    longPressTimer.current = window.setTimeout(() => {
+      onDebugGesture?.();
+    }, 800);
+  };
+
   return (
     <>
       <div className="wordmark">
-        <h1>
+        <h1
+          onPointerDown={startLongPress}
+          onPointerUp={clearLongPress}
+          onPointerLeave={clearLongPress}
+          onPointerCancel={clearLongPress}
+          title="Appui long : debug audio"
+        >
           Séance<span>.</span>
         </h1>
         <button className="icon-btn" onClick={onShare} title="Partager">
@@ -80,6 +105,9 @@ export function InputScreen({ state, setState, onLoad, onShare }: InputScreenPro
       )}
 
       <p className="foot">Fonctionne hors ligne, sans compte. La séance est mémorisée sur cet appareil.</p>
+      <p className="build-label" aria-label="Version déployée">
+        {getBuildLabel()}
+      </p>
     </>
   );
 }

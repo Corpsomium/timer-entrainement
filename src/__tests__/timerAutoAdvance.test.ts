@@ -8,7 +8,10 @@ vi.mock('../utils/audio', () => ({
   beepCountdown: vi.fn(),
   ensureAudio: vi.fn(),
   unlockAudio: vi.fn(),
+  startSilentKeepalive: vi.fn(),
+  stopSilentKeepalive: vi.fn(),
   getAudioMuteHint: () => '',
+  getAudioDebugInfo: () => ({}),
 }));
 
 describe('Timer Auto-Advance', () => {

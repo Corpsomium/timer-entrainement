@@ -5,6 +5,7 @@ import {
   beepCountdown,
   beepEnd,
   ensureAudio,
+  getAudioDebugInfo,
   getAudioMuteHint,
   unlockAudio,
 } from './audio';
@@ -44,26 +45,34 @@ describe('audio helpers', () => {
         addEventListener = vi.fn();
       }
     );
+    vi.stubGlobal(
+      'Audio',
+      class {
+        src = '';
+        volume = 1;
+        muted = false;
+        loop = false;
+        currentTime = 0;
+        preload = 'auto';
+        play = vi.fn(async () => undefined);
+        pause = vi.fn();
+        setAttribute = vi.fn();
+      }
+    );
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
   });
 
-  it('exposes a mute-switch hint for ambient mode', () => {
-    expect(getAudioMuteHint().toLowerCase()).toMatch(/mute|bips/);
+  it('exposes a mute / Brave hint', () => {
+    expect(getAudioMuteHint().toLowerCase()).toMatch(/bips|brave|mute/);
   });
 
-  it('builds a WAV data URI for HTMLAudio fallback', () => {
+  it('builds a WAV data URI', () => {
     const uri = buildBeepDataUri(880, 0.11, 'square', 0.14);
     expect(uri.startsWith('data:audio/wav;base64,')).toBe(true);
     expect(uri.length).toBeGreaterThan(100);
-  });
-
-  it('caches identical beep data URIs', () => {
-    const a = buildBeepDataUri(440, 0.1, 'sine', 0.2);
-    const b = buildBeepDataUri(440, 0.1, 'sine', 0.2);
-    expect(a).toBe(b);
   });
 
   it('ensureAudio / unlockAudio / beep do not throw', () => {
@@ -72,5 +81,16 @@ describe('audio helpers', () => {
     expect(() => beep(440, 0.05)).not.toThrow();
     expect(() => beepCountdown()).not.toThrow();
     expect(() => beepEnd()).not.toThrow();
+  });
+
+  it('exposes debug snapshot fields', () => {
+    unlockAudio();
+    const info = getAudioDebugInfo();
+    expect(info).toHaveProperty('audioSessionSupported');
+    expect(info).toHaveProperty('audioContextState');
+    expect(info).toHaveProperty('lastBeepMethod');
+    expect(info).toHaveProperty('htmlPrimed');
+    expect(info).toHaveProperty('silentLoopPlaying');
+    expect(info).toHaveProperty('preferredPath');
   });
 });

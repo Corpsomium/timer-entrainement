@@ -5,6 +5,11 @@ import { InputScreen } from './components/InputScreen';
 import { OverviewScreen } from './components/OverviewScreen';
 import { SessionScreen } from './components/SessionScreen';
 import { DoneScreen } from './components/DoneScreen';
+import {
+  AudioDebugPanel,
+  enableAudioDebug,
+  shouldShowAudioDebug,
+} from './components/AudioDebugPanel';
 import { shareUrl } from './utils/storage';
 import { unlockAudio } from './utils/audio';
 import { withViewTransition } from './utils/viewTransition';
@@ -27,6 +32,7 @@ function App() {
 
   const { getIllustration, updateExerciseIllustration } = useIllustrations(state.exercises);
   const [toast, setToast] = useState<string | null>(null);
+  const [showDebug, setShowDebug] = useState(() => shouldShowAudioDebug());
 
   useEffect(() => {
     const onFirstGesture = () => {
@@ -93,11 +99,22 @@ function App() {
     document.body.removeChild(ta);
   };
 
+  const openDebug = () => {
+    enableAudioDebug();
+    setShowDebug(true);
+  };
+
   return (
     <>
       <div className="wrap">
         {state.screen === 'input' && (
-          <InputScreen state={state} setState={setState} onLoad={loadWorkoutWithTransition} onShare={handleShare} />
+          <InputScreen
+            state={state}
+            setState={setState}
+            onLoad={loadWorkoutWithTransition}
+            onShare={handleShare}
+            onDebugGesture={openDebug}
+          />
         )}
 
         {state.screen === 'overview' && (
@@ -142,6 +159,8 @@ function App() {
       <div className={`toast ${toast ? 'show' : ''}`} role="status">
         {toast}
       </div>
+
+      {showDebug && <AudioDebugPanel />}
     </>
   );
 }
