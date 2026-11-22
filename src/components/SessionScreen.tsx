@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import type { SessionState, SequenceStep, ExerciseIllustration, Exercise } from '../types';
 import { formatDuration, formatDurationLabel } from '../utils/formatters';
 import { withViewTransition } from '../utils/viewTransition';
@@ -82,8 +82,71 @@ export function SessionScreen({
     state.phase === 'rest' ||
     state.stepIndex > 0;
 
+  const goOverview = () => setState((prev) => ({ ...prev, screen: 'overview' }));
+  const resetSession = () => {
+    if (confirm('Réinitialiser la séance en cours ?')) {
+      onReset();
+    }
+  };
+
+  const isRest = currentStep.type === 'rest';
+  const isWork = !isRest && state.phase === 'work';
+  const readyExercise =
+    !isRest && !isWork ? state.exercises[currentStep.exerciseIndex!] : null;
+
+  let primaryActions: ReactNode = null;
+  if (isRest) {
+    primaryActions = (
+      <div className="adj session-sticky-adj">
+        <button type="button" className="btn btn-ghost" onClick={() => onAdjustTimer(-15)}>
+          −15 s
+        </button>
+        <button
+          type="button"
+          className="btn btn-ghost"
+          onClick={() => withViewTransition(() => onSkipRest())}
+        >
+          Passer
+        </button>
+        <button type="button" className="btn btn-ghost" onClick={() => onAdjustTimer(15)}>
+          +15 s
+        </button>
+      </div>
+    );
+  } else if (isWork) {
+    primaryActions = (
+      <div className="actions session-sticky-primary">
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => withViewTransition(() => onCompleteSet())}
+        >
+          Terminer la série
+        </button>
+      </div>
+    );
+  } else if (readyExercise) {
+    const isTimed = readyExercise.durationSec != null;
+    primaryActions = (
+      <div className="actions session-sticky-primary">
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() =>
+            withViewTransition(() => {
+              if (isTimed) onStartWork();
+              else onCompleteSet();
+            })
+          }
+        >
+          {isTimed ? 'Démarrer' : 'Série terminée'}
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className="session-screen">
       <div className="topbar" style={{ viewTransitionName: 'progress-bar' } as React.CSSProperties}>
         <button className="icon-btn" onClick={onBack} disabled={!canGoBack} title="Revenir en arrière">
           ←
@@ -102,48 +165,37 @@ export function SessionScreen({
         </button>
       </div>
 
-      {currentStep.type === 'rest' ? (
-        <RestPhase
-          state={state}
-          nextExercise={currentStep.nextExercise}
-          onSkipRest={onSkipRest}
-          onAdjustTimer={onAdjustTimer}
-        />
-      ) : state.phase === 'work' ? (
-        <WorkPhase
-          state={state}
-          onCompleteSet={onCompleteSet}
-          onAdjustTimer={onAdjustTimer}
-        />
-      ) : (
-        <ReadyPhase
-          state={state}
-          currentStep={currentStep}
-          onCompleteSet={onCompleteSet}
-          onStartWork={onStartWork}
-          getIllustration={getIllustration}
-          setLightbox={setLightbox}
-          setPickerExercise={setPickerExercise}
-        />
-      )}
+      <div className="session-scroll">
+        {isRest ? (
+          <RestPhase state={state} nextExercise={currentStep.nextExercise} />
+        ) : isWork ? (
+          <WorkPhase state={state} onAdjustTimer={onAdjustTimer} />
+        ) : (
+          <ReadyPhase
+            state={state}
+            currentStep={currentStep}
+            getIllustration={getIllustration}
+            setLightbox={setLightbox}
+            setPickerExercise={setPickerExercise}
+          />
+        )}
+        {/* Reserves space so scroll content never sits under the sticky footer */}
+        <div className="actions-sticky-spacer" aria-hidden />
+      </div>
 
-      <div className="actions duo" style={{ marginTop: '8px' }}>
-        <button
-          className="btn btn-ghost"
-          onClick={() => setState((prev) => ({ ...prev, screen: 'overview' }))}
-        >
-          Aperçu
-        </button>
-        <button
-          className="btn btn-danger"
-          onClick={() => {
-            if (confirm('Réinitialiser la séance en cours ?')) {
-              onReset();
-            }
-          }}
-        >
-          Réinitialiser
-        </button>
+      <div
+        className="session-sticky actions-sticky"
+        style={{ viewTransitionName: 'action-area' } as React.CSSProperties}
+      >
+        {primaryActions}
+        <div className="actions duo session-sticky-secondary">
+          <button type="button" className="btn btn-ghost btn-compact" onClick={goOverview}>
+            Aperçu
+          </button>
+          <button type="button" className="btn btn-danger btn-compact" onClick={resetSession}>
+            Réinitialiser
+          </button>
+        </div>
       </div>
 
       {lightbox && (
@@ -164,28 +216,18 @@ export function SessionScreen({
           onClose={() => setPickerExercise(null)}
         />
       )}
-    </>
+    </div>
   );
 }
 
 function RestPhase({
   state,
   nextExercise,
-  onSkipRest,
-  onAdjustTimer,
 }: {
   state: SessionState;
   nextExercise?: { name: string; setIndex: number; totalSets: number; load: string };
-  onSkipRest: () => void;
-  onAdjustTimer: (deltaSec: number) => void;
 }) {
   const [remaining, setRemaining] = useState(Math.max(0, (state.endsAt || 0) - Date.now()));
-
-  const handleSkipRest = () => {
-    withViewTransition(() => {
-      onSkipRest();
-    });
-  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -200,7 +242,7 @@ function RestPhase({
 
   return (
     <>
-      <div className="timer-box" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
+      <div className="timer-box">
         <div className="ring-wrap rest">
           <svg viewBox="0 0 108 108" aria-hidden="true">
             <circle className="ring-track" cx="54" cy="54" r="48"></circle>
@@ -228,39 +270,18 @@ function RestPhase({
           </span>
         </div>
       )}
-
-      <div className="actions-sticky-spacer" />
-      <div className="adj actions-sticky">
-        <button className="btn btn-ghost" onClick={() => onAdjustTimer(-15)}>
-          −15 s
-        </button>
-        <button className="btn btn-ghost" onClick={handleSkipRest}>
-          Passer
-        </button>
-        <button className="btn btn-ghost" onClick={() => onAdjustTimer(15)}>
-          +15 s
-        </button>
-      </div>
     </>
   );
 }
 
 function WorkPhase({
   state,
-  onCompleteSet,
   onAdjustTimer,
 }: {
   state: SessionState;
-  onCompleteSet: () => void;
   onAdjustTimer: (deltaSec: number) => void;
 }) {
   const [remaining, setRemaining] = useState(Math.max(0, (state.endsAt || 0) - Date.now()));
-
-  const handleCompleteSet = () => {
-    withViewTransition(() => {
-      onCompleteSet();
-    });
-  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -275,7 +296,7 @@ function WorkPhase({
 
   return (
     <>
-      <div className="timer-box" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
+      <div className="timer-box">
         <div className="ring-wrap">
           <svg viewBox="0 0 108 108" aria-hidden="true">
             <circle className="ring-track" cx="54" cy="54" r="48"></circle>
@@ -295,18 +316,11 @@ function WorkPhase({
       </div>
 
       <div className="adj" style={{ gridTemplateColumns: '1fr 1fr' }}>
-        <button className="btn btn-ghost" onClick={() => onAdjustTimer(-15)}>
+        <button type="button" className="btn btn-ghost" onClick={() => onAdjustTimer(-15)}>
           −15 s
         </button>
-        <button className="btn btn-ghost" onClick={() => onAdjustTimer(15)}>
+        <button type="button" className="btn btn-ghost" onClick={() => onAdjustTimer(15)}>
           +15 s
-        </button>
-      </div>
-
-      <div className="actions-sticky-spacer" />
-      <div className="actions actions-sticky">
-        <button className="btn btn-primary" onClick={handleCompleteSet}>
-          Terminer la série
         </button>
       </div>
     </>
@@ -316,34 +330,18 @@ function WorkPhase({
 function ReadyPhase({
   state,
   currentStep,
-  onCompleteSet,
-  onStartWork,
   getIllustration,
   setLightbox,
   setPickerExercise,
 }: {
   state: SessionState;
   currentStep: SequenceStep;
-  onCompleteSet: () => void;
-  onStartWork: () => void;
   getIllustration: (name: string) => ExerciseIllustration | null;
   setLightbox: (lightbox: { images: string[]; name: string } | null) => void;
   setPickerExercise: (exercise: Exercise | null) => void;
 }) {
   const ex = state.exercises[currentStep.exerciseIndex!];
   const illustration = getIllustration(ex.name);
-
-  const handleCompleteSet = () => {
-    withViewTransition(() => {
-      onCompleteSet();
-    });
-  };
-
-  const handleStartWork = () => {
-    withViewTransition(() => {
-      onStartWork();
-    });
-  };
 
   const currentExIndex = state.exercises.findIndex((e) => e === ex);
   const totalExercises = state.exercises.length;
@@ -427,26 +425,6 @@ function ReadyPhase({
             {ex.weight && ` · ${ex.weight}`}
           </div>
         </div>
-
-        {ex.durationSec != null ? (
-          <>
-            <div className="actions-sticky-spacer" />
-            <div className="actions actions-sticky" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
-              <button className="btn btn-primary" onClick={handleStartWork}>
-                Démarrer
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="actions-sticky-spacer" />
-            <div className="actions actions-sticky" style={{ viewTransitionName: 'action-area' } as React.CSSProperties}>
-              <button className="btn btn-primary" onClick={handleCompleteSet}>
-                Série terminée
-              </button>
-            </div>
-          </>
-        )}
       </div>
     </div>
   );

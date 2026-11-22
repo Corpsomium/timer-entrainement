@@ -36,7 +36,8 @@ export function DoneScreen({ state, setState, onRestart, onShare }: DoneScreenPr
         })}
       </div>
 
-      <div className="actions">
+      <div className="actions-sticky-spacer overview-sticky-spacer" aria-hidden />
+      <div className="actions actions-sticky done-actions">
         <button className="btn btn-primary" onClick={onRestart}>
           Nouvelle séance
         </button>
