@@ -67,29 +67,12 @@ export function buildSequence(exercises: Exercise[], restSec: number): SequenceS
 
           if (nextItem) {
             if (nextItem.type === 'single') {
-              const nextEx = exercises[nextItem.index];
-              nextExercise = {
-                name: nextEx.name,
-                setIndex: 0,
-                totalSets: nextEx.sets,
-                load: formatLoad(nextEx),
-              };
+              nextExercise = previewExercise(exercises[nextItem.index], 0);
             } else if (nextItem.type === 'group') {
-              const firstEx = nextItem.group.exercises[0].exercise;
-              nextExercise = {
-                name: firstEx.name,
-                setIndex: 0,
-                totalSets: firstEx.sets,
-                load: formatLoad(firstEx),
-              };
+              nextExercise = previewExercise(nextItem.group.exercises[0].exercise, 0);
             }
           } else if (!isLastSetOfExercise) {
-            nextExercise = {
-              name: ex.name,
-              setIndex: setIdx + 1,
-              totalSets: ex.sets,
-              load: formatLoad(ex),
-            };
+            nextExercise = previewExercise(ex, setIdx + 1);
           }
 
           sequence.push({
@@ -126,14 +109,7 @@ export function buildSequence(exercises: Exercise[], restSec: number): SequenceS
               (e) => round + 1 < e.exercise.sets
             );
             const nextEx = nextRoundExercises[0]?.exercise;
-            const nextExercise = nextEx
-              ? {
-                  name: nextEx.name,
-                  setIndex: round + 1,
-                  totalSets: nextEx.sets,
-                  load: formatLoad(nextEx),
-                }
-              : undefined;
+            const nextExercise = nextEx ? previewExercise(nextEx, round + 1) : undefined;
 
             sequence.push({
               type: 'rest',
@@ -144,21 +120,9 @@ export function buildSequence(exercises: Exercise[], restSec: number): SequenceS
             let nextExercise = undefined;
 
             if (nextItem.type === 'single') {
-              const nextEx = exercises[nextItem.index];
-              nextExercise = {
-                name: nextEx.name,
-                setIndex: 0,
-                totalSets: nextEx.sets,
-                load: formatLoad(nextEx),
-              };
+              nextExercise = previewExercise(exercises[nextItem.index], 0);
             } else if (nextItem.type === 'group') {
-              const firstEx = nextItem.group.exercises[0].exercise;
-              nextExercise = {
-                name: firstEx.name,
-                setIndex: 0,
-                totalSets: firstEx.sets,
-                load: formatLoad(firstEx),
-              };
+              nextExercise = previewExercise(nextItem.group.exercises[0].exercise, 0);
             }
 
             sequence.push({
@@ -174,13 +138,13 @@ export function buildSequence(exercises: Exercise[], restSec: number): SequenceS
   return sequence;
 }
 
-function formatLoad(ex: Exercise): string {
-  const rx = ex.durationSec != null ? formatDurationLabel(ex.durationSec) : String(ex.reps);
-  const base = `${ex.sets} × ${rx}`;
-  return ex.weight ? `${base} · ${ex.weight}` : base;
-}
-
-function formatDurationLabel(sec: number): string {
-  if (sec % 1 !== 0) return String(sec).replace('.', ',') + ' s';
-  return sec + ' s';
+function previewExercise(ex: Exercise, setIndex: number) {
+  return {
+    name: ex.name,
+    setIndex,
+    totalSets: ex.sets,
+    reps: ex.reps,
+    durationSec: ex.durationSec,
+    weight: ex.weight,
+  };
 }
