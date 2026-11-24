@@ -330,10 +330,17 @@ function WorkPhase({
           Série {setNum}/{ex.sets}
         </div>
         <div className="meta-line">
-          <strong>
+          <span className="meta-primary">
             {ex.durationSec != null ? formatDurationLabel(ex.durationSec) : `${ex.reps} reps`}
-          </strong>
-          {ex.weight && ` · ${ex.weight}`}
+          </span>
+          {ex.weight && (
+            <>
+              <span className="meta-sep" aria-hidden>
+                ·
+              </span>
+              <span className="meta-primary">{ex.weight}</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -441,10 +448,17 @@ function ReadyPhase({
             Série {setNum}/{totalSets}
           </div>
           <div className="meta-line">
-            <strong>
+            <span className="meta-primary">
               {ex.durationSec != null ? formatDurationLabel(ex.durationSec) : `${ex.reps} reps`}
-            </strong>
-            {ex.weight && ` · ${ex.weight}`}
+            </span>
+            {ex.weight && (
+              <>
+                <span className="meta-sep" aria-hidden>
+                  ·
+                </span>
+                <span className="meta-primary">{ex.weight}</span>
+              </>
+            )}
           </div>
         </div>
       </div>

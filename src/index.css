@@ -610,33 +610,38 @@ input[type='number']:focus {
 
 .hero-ex {
   text-align: center;
-  padding: 8px 4px 18px;
+  padding: 6px 4px 14px;
 }
 
 .hero-ex .kicker {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   font-size: 12px;
   letter-spacing: 0.14em;
 }
 
 .hero-ex h2 {
-  font-size: clamp(2rem, 9.5vw, 3rem); /* ~32–48px: arm’s-length gym focus */
+  /* Mobile target ~32–36px; scales up on desktop */
+  font-size: clamp(2rem, 8.5vw, 2.75rem);
   letter-spacing: -0.03em;
-  line-height: 1.12;
+  line-height: 1.15;
   font-weight: 800;
   text-wrap: balance;
   overflow-wrap: break-word;
-  max-width: 22ch;
+  max-width: 18ch;
   margin-inline: auto;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .hero-ex--work {
-  padding: 4px 4px 10px;
+  padding: 2px 4px 8px;
 }
 
 .hero-ex--work h2 {
-  font-size: clamp(1.5rem, 7vw, 2.25rem);
-  max-width: 24ch;
+  font-size: clamp(1.875rem, 8vw, 2.5rem); /* keep work name near ready size */
+  max-width: 18ch;
 }
 
 .btn-edit-image {
@@ -670,28 +675,38 @@ input[type='number']:focus {
 }
 
 .meta-line {
-  margin-top: 14px;
-  font-size: clamp(1.25rem, 5.2vw, 1.75rem); /* ~20–28px */
-  line-height: 1.25;
-  color: var(--muted);
-  font-weight: 650;
+  margin-top: 12px;
+  font-size: clamp(1.75rem, 7.5vw, 2.25rem); /* ~28–36px; load = duration */
+  line-height: 1.2;
+  color: var(--text);
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35em;
 }
 
-.meta-line strong {
+.meta-primary {
   color: var(--text);
   font-weight: 800;
 }
 
+.meta-sep {
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .set-badge {
   display: inline-block;
-  margin-top: 16px;
+  margin-top: 14px;
   background: #1c1c1c;
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: 10px 18px;
-  font-size: clamp(1.25rem, 5.5vw, 1.875rem); /* ~20–30px */
-  line-height: 1.2;
+  padding: 10px 20px;
+  font-size: clamp(1.75rem, 7vw, 2.125rem); /* ~28–34px */
+  line-height: 1.15;
   font-weight: 800;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
@@ -706,8 +721,9 @@ input[type='number']:focus {
 
 .ring-wrap {
   position: relative;
-  width: min(72vw, 280px);
-  height: min(72vw, 280px);
+  /* Shrink ring so large set info fits with sticky footer */
+  width: min(58vw, 240px);
+  height: min(58vw, 240px);
 }
 
 .ring-wrap svg {
@@ -747,7 +763,7 @@ input[type='number']:focus {
 
 .ring-center .time {
   font-variant-numeric: tabular-nums;
-  font-size: clamp(52px, 16vw, 76px);
+  font-size: clamp(40px, 12vw, 60px);
   font-weight: 800;
   letter-spacing: -0.06em;
   line-height: 1;
@@ -778,31 +794,35 @@ input[type='number']:focus {
   background: #141414;
   border: 1px dashed #333;
   border-radius: 16px;
-  padding: 16px 18px;
-  margin-bottom: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
   text-align: center;
 }
 
 .next-preview .kicker {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   color: var(--lime-dim);
   font-size: 12px;
 }
 
 .next-preview-name {
   margin: 0;
-  font-size: clamp(1.5rem, 6.5vw, 2rem); /* ~24–32px */
-  line-height: 1.2;
+  font-size: clamp(2rem, 8.5vw, 2.5rem); /* ~32–40px, match ready name */
+  line-height: 1.15;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   text-wrap: balance;
   overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .next-preview-set {
-  margin: 12px 0 0;
-  font-size: clamp(1.375rem, 5.8vw, 1.75rem); /* ~22–28px */
-  line-height: 1.2;
+  margin: 10px 0 0;
+  font-size: clamp(1.75rem, 7vw, 2.125rem); /* ~28–34px */
+  line-height: 1.15;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: var(--text);
@@ -810,43 +830,71 @@ input[type='number']:focus {
 
 .next-preview-meta {
   margin: 8px 0 0;
-  color: var(--muted);
-  font-size: clamp(1.1875rem, 4.8vw, 1.5rem); /* ~19–24px */
-  line-height: 1.3;
-  font-weight: 650;
+  color: var(--text);
+  font-size: clamp(1.75rem, 7.5vw, 2.25rem); /* ~28–36px, load as visible as duration */
+  line-height: 1.2;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
+}
+
+/* Mobile session: shrink media so set typography is the clear focus */
+@media (max-width: 600px) {
+  .session-screen .dual-frame {
+    margin-block: 8px;
+    max-width: 280px;
+  }
+
+  .session-screen .ex-img-dual {
+    max-height: 150px;
+  }
 }
 
 /* Short phones: keep large type but tighten media/timer so sticky footer stays clear */
 @media (max-width: 400px) and (max-height: 700px) {
   .ring-wrap {
-    width: min(52vw, 200px);
-    height: min(52vw, 200px);
+    width: min(48vw, 180px);
+    height: min(48vw, 180px);
   }
 
   .ring-center .time {
-    font-size: clamp(36px, 13vw, 56px);
+    font-size: clamp(32px, 11vw, 48px);
   }
 
-  .dual-frame {
-    margin-block: 8px;
-    max-width: 280px;
+  .session-screen .dual-frame {
+    margin-block: 4px;
+    max-width: 220px;
   }
 
-  .ex-img-dual {
-    max-height: 140px;
+  .session-screen .ex-img-dual {
+    max-height: 100px;
   }
 
   .hero-ex {
-    padding-block: 4px 10px;
+    padding-block: 2px 8px;
   }
 
-  .hero-ex h2 {
-    font-size: clamp(1.75rem, 8.5vw, 2.5rem);
+  .hero-ex h2,
+  .next-preview-name {
+    font-size: clamp(1.875rem, 8.2vw, 2.25rem); /* ~30–36px */
+  }
+
+  .set-badge,
+  .next-preview-set {
+    font-size: clamp(1.625rem, 6.8vw, 1.875rem); /* ~26–30px */
+    padding: 8px 16px;
+  }
+
+  .meta-line,
+  .next-preview-meta {
+    font-size: clamp(1.625rem, 7vw, 1.875rem); /* ~26–30px */
   }
 
   .next-preview {
-    padding: 12px 14px;
+    padding: 10px 12px;
+  }
+
+  .timer-box {
+    padding-block: 4px;
   }
 }
 
