@@ -1807,7 +1807,6 @@ input[type='number']:focus {
   }
 
   .session-layout .frame-arrow {
-    transform: rotate(90deg);
     line-height: 1;
   }
 
@@ -1853,67 +1852,99 @@ input[type='number']:focus {
     display: none;
   }
 
-  .session-sticky {
-    margin-top: var(--space-3);
-  }
-
   .session-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr);
-    gap: var(--space-5);
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
     align-items: stretch;
+    gap: var(--space-5);
     height: 100%;
+    min-height: 0;
   }
 
   .session-layout--solo {
-    grid-template-columns: minmax(0, 1fr);
+    justify-content: center;
   }
 
   .session-images {
-    grid-column: 1;
-    height: 100%;
+    flex: 1 1 48%;
+    max-width: min(460px, 48%);
+    align-self: stretch;
+    height: auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
   }
 
   .session-info-actions {
-    grid-column: 2;
+    flex: 1 1 42%;
+    max-width: min(420px, 46%);
+    align-self: stretch;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-evenly;
     align-items: center;
     min-height: 0;
-    overflow: auto;
+    overflow: hidden;
     text-align: center;
   }
 
   .session-layout--solo .session-info-actions {
-    grid-column: 1;
+    max-width: min(520px, 100%);
   }
 
+  /* Stack DEPART → FIN with ↓; cover fills the frame (no side letterboxing) */
   .session-layout .dual-frame {
-    height: 100%;
-    gap: var(--space-4);
+    flex: 1 1 auto;
+    flex-direction: column;
+    justify-content: space-evenly;
     align-items: stretch;
+    width: 100%;
+    min-height: 0;
+    height: auto;
+    gap: var(--space-3);
   }
 
   .session-layout .frame-item {
-    height: 100%;
+    position: relative;
+    flex: 1 1 0;
+    min-height: 0;
+    width: 100%;
   }
 
-  /* Fill the left column height; contain keeps aspect without cropping */
   .session-layout .ex-img-dual {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 0;
-    flex: 1 1 auto;
+    height: calc(100% - 22px); /* room for départ/fin label */
     max-height: none;
-    object-fit: contain;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .session-layout .frame-label {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
   }
 
   .session-layout .frame-arrow {
     align-self: center;
+    flex: 0 0 auto;
+    font-size: 22px;
+    color: var(--muted);
+    line-height: 1;
+    padding-block: 2px;
   }
 
-  /* Compact sticky chrome on short desktop windows so content keeps the pixels */
+  .session-sticky {
+    margin-top: var(--space-3);
+  }
+
   .session-sticky .btn-primary,
   .session-sticky .btn {
     min-height: 48px;
@@ -1926,8 +1957,8 @@ input[type='number']:focus {
 
   .session-phase--rest {
     flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-wrap: nowrap;
+    justify-content: space-evenly;
     align-items: center;
     gap: var(--space-6);
   }
@@ -1938,10 +1969,34 @@ input[type='number']:focus {
   }
 
   .session-phase--rest .next-preview {
-    max-width: min(420px, 100%);
+    max-width: min(420px, 46%);
     text-align: center;
   }
 
+  .next-preview {
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+
+  .next-preview .hero-ex {
+    padding-inline: 0;
+  }
+}
+
+/* Prochain matches current-set block on all breakpoints */
+.next-preview {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 0;
+}
+
+.next-preview .hero-ex {
+  padding-inline: 0;
+}
+
+@media (min-width: 601px) {
   .session-inline-adj {
     width: min(280px, 100%);
   }
@@ -1962,6 +2017,6 @@ input[type='number']:focus {
 
 @media (min-width: 1024px) {
   .session-layout {
-    gap: var(--space-8);
+    gap: var(--space-6);
   }
 }

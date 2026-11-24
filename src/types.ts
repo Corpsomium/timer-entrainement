@@ -29,7 +29,9 @@ export interface SequenceStep {
     name: string;
     setIndex: number;
     totalSets: number;
-    load: string;
+    reps: number | null;
+    durationSec: number | null;
+    weight: string;
   };
 }
 

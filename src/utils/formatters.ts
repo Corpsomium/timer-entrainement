@@ -6,11 +6,23 @@ export function formatReps(ex: Exercise): string {
   return ex.reps + ' reps';
 }
 
+/** Overview / done: includes set count, e.g. "3 × 12 · 2x15kg". */
 export function formatLoad(ex: Exercise): string {
   if (!ex) return '';
-  const rx = ex.durationSec != null ? formatDurationLabel(ex.durationSec) : String(ex.reps);
+  const rx = formatExerciseEffort(ex);
   const base = ex.sets + ' × ' + rx;
   return ex.weight ? base + ' · ' + ex.weight : base;
+}
+
+/** Session set line: "12 reps · 2x15kg" or "30 s · 2x15kg" (no set count). */
+export function formatExerciseEffort(ex: Pick<Exercise, 'reps' | 'durationSec'>): string {
+  if (ex.durationSec != null) return formatDurationLabel(ex.durationSec);
+  return `${ex.reps ?? 0} reps`;
+}
+
+export function formatExerciseMeta(ex: Pick<Exercise, 'reps' | 'durationSec' | 'weight'>): string {
+  const effort = formatExerciseEffort(ex);
+  return ex.weight ? `${effort} · ${ex.weight}` : effort;
 }
 
 export function formatDurationLabel(sec: number): string {

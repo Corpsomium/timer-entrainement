@@ -1,6 +1,6 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import type { SessionState, SequenceStep, ExerciseIllustration, Exercise } from '../types';
-import { formatDuration, formatDurationLabel } from '../utils/formatters';
+import { formatDuration, formatExerciseEffort } from '../utils/formatters';
 import { withViewTransition } from '../utils/viewTransition';
 import { Lightbox } from './Lightbox';
 import { ImagePicker } from './ImagePicker';
@@ -226,12 +226,56 @@ export function SessionScreen({
   );
 }
 
+function SetInfoBlock({
+  name,
+  setNum,
+  totalSets,
+  reps,
+  durationSec,
+  weight,
+  kicker,
+  editControl,
+  className,
+}: {
+  name: string;
+  setNum: number;
+  totalSets: number;
+  reps: number | null;
+  durationSec: number | null;
+  weight: string;
+  kicker?: string;
+  editControl?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`hero-ex${className ? ` ${className}` : ''}`}>
+      {kicker ? <div className="kicker">{kicker}</div> : null}
+      <h2>{name}</h2>
+      {editControl}
+      <div className="set-badge">
+        Série {setNum}/{totalSets}
+      </div>
+      <div className="meta-line">
+        <span className="meta-primary">{formatExerciseEffort({ reps, durationSec })}</span>
+        {weight ? (
+          <>
+            <span className="meta-sep" aria-hidden>
+              ·
+            </span>
+            <span className="meta-primary">{weight}</span>
+          </>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function RestPhase({
   state,
   nextExercise,
 }: {
   state: SessionState;
-  nextExercise?: { name: string; setIndex: number; totalSets: number; load: string };
+  nextExercise?: SequenceStep['nextExercise'];
 }) {
   const [remaining, setRemaining] = useState(Math.max(0, (state.endsAt || 0) - Date.now()));
 
@@ -268,13 +312,19 @@ function RestPhase({
       </div>
 
       {nextExercise && (
-        <div className="next-preview" style={{ viewTransitionName: 'next-preview' } as React.CSSProperties}>
-          <div className="kicker">Prochain</div>
-          <p className="next-preview-name">{nextExercise.name}</p>
-          <p className="next-preview-set">
-            Série {nextExercise.setIndex + 1}/{nextExercise.totalSets}
-          </p>
-          <p className="next-preview-meta">{nextExercise.load}</p>
+        <div
+          className="next-preview"
+          style={{ viewTransitionName: 'next-preview' } as React.CSSProperties}
+        >
+          <SetInfoBlock
+            name={nextExercise.name}
+            setNum={nextExercise.setIndex + 1}
+            totalSets={nextExercise.totalSets}
+            reps={nextExercise.reps}
+            durationSec={nextExercise.durationSec}
+            weight={nextExercise.weight}
+            kicker="Prochain"
+          />
         </div>
       )}
     </div>
@@ -316,7 +366,7 @@ function SessionDualFrame({
         {imageUrls.length > 1 && (
           <>
             <div className="frame-arrow" aria-hidden>
-              →
+              ↓
             </div>
             <div className="frame-item">
               <img src={imageUrls[1]} alt={`${exerciseName} - fin`} className="ex-img-dual" />
@@ -389,25 +439,15 @@ function WorkPhase({
           </div>
         </div>
 
-        <div className="hero-ex hero-ex--work">
-          <h2>{ex.name}</h2>
-          <div className="set-badge">
-            Série {setNum}/{ex.sets}
-          </div>
-          <div className="meta-line">
-            <span className="meta-primary">
-              {ex.durationSec != null ? formatDurationLabel(ex.durationSec) : `${ex.reps} reps`}
-            </span>
-            {ex.weight && (
-              <>
-                <span className="meta-sep" aria-hidden>
-                  ·
-                </span>
-                <span className="meta-primary">{ex.weight}</span>
-              </>
-            )}
-          </div>
-        </div>
+        <SetInfoBlock
+          className="hero-ex--work"
+          name={ex.name}
+          setNum={setNum}
+          totalSets={ex.sets}
+          reps={ex.reps}
+          durationSec={ex.durationSec}
+          weight={ex.weight}
+        />
 
         <div className="adj session-inline-adj" style={{ gridTemplateColumns: '1fr 1fr' }}>
           <button type="button" className="btn btn-ghost" onClick={() => onAdjustTimer(-15)}>
@@ -462,34 +502,27 @@ function ReadyPhase({
       />
 
       <div className="session-info-actions">
-        <div className="hero-ex" style={{ viewTransitionName: 'exercise-header', position: 'relative' } as React.CSSProperties}>
-          <div className="kicker">{kicker}</div>
-          <h2>{ex.name}</h2>
-          <button
-            className="btn-edit-image"
-            type="button"
-            onClick={() => setPickerExercise(ex)}
-            title="Changer l'image"
-            aria-label="Changer l'image"
-          >
-            ✎
-          </button>
-          <div className="set-badge">
-            Série {setNum}/{totalSets}
-          </div>
-          <div className="meta-line">
-            <span className="meta-primary">
-              {ex.durationSec != null ? formatDurationLabel(ex.durationSec) : `${ex.reps} reps`}
-            </span>
-            {ex.weight && (
-              <>
-                <span className="meta-sep" aria-hidden>
-                  ·
-                </span>
-                <span className="meta-primary">{ex.weight}</span>
-              </>
-            )}
-          </div>
+        <div style={{ viewTransitionName: 'exercise-header', position: 'relative' } as React.CSSProperties}>
+          <SetInfoBlock
+            name={ex.name}
+            setNum={setNum}
+            totalSets={totalSets}
+            reps={ex.reps}
+            durationSec={ex.durationSec}
+            weight={ex.weight}
+            kicker={kicker}
+            editControl={
+              <button
+                className="btn-edit-image"
+                type="button"
+                onClick={() => setPickerExercise(ex)}
+                title="Changer l'image"
+                aria-label="Changer l'image"
+              >
+                ✎
+              </button>
+            }
+          />
         </div>
       </div>
     </div>
