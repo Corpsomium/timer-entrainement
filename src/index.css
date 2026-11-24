@@ -837,64 +837,43 @@ input[type='number']:focus {
   font-variant-numeric: tabular-nums;
 }
 
-/* Mobile session: shrink media so set typography is the clear focus */
-@media (max-width: 600px) {
-  .session-screen .dual-frame {
-    margin-block: 8px;
-    max-width: 280px;
-  }
-
-  .session-screen .ex-img-dual {
-    max-height: 150px;
-  }
-}
-
-/* Short phones: keep large type but tighten media/timer so sticky footer stays clear */
+/* Short phones: keep large type; images grow via flex (see session fill rules) */
 @media (max-width: 400px) and (max-height: 700px) {
   .ring-wrap {
-    width: min(48vw, 180px);
-    height: min(48vw, 180px);
+    width: min(42vw, 160px);
+    height: min(42vw, 160px);
   }
 
   .ring-center .time {
-    font-size: clamp(32px, 11vw, 48px);
-  }
-
-  .session-screen .dual-frame {
-    margin-block: 4px;
-    max-width: 220px;
-  }
-
-  .session-screen .ex-img-dual {
-    max-height: 100px;
+    font-size: clamp(28px, 10vw, 44px);
   }
 
   .hero-ex {
-    padding-block: 2px 8px;
+    padding-block: 2px 6px;
   }
 
   .hero-ex h2,
   .next-preview-name {
-    font-size: clamp(1.875rem, 8.2vw, 2.25rem); /* ~30–36px */
+    font-size: clamp(1.625rem, 7.5vw, 2rem);
   }
 
   .set-badge,
   .next-preview-set {
-    font-size: clamp(1.625rem, 6.8vw, 1.875rem); /* ~26–30px */
-    padding: 8px 16px;
+    font-size: clamp(1.375rem, 6vw, 1.625rem);
+    padding: 6px 14px;
   }
 
   .meta-line,
   .next-preview-meta {
-    font-size: clamp(1.625rem, 7vw, 1.875rem); /* ~26–30px */
+    font-size: clamp(1.375rem, 6.2vw, 1.625rem);
   }
 
   .next-preview {
-    padding: 10px 12px;
+    padding: 8px 10px;
   }
 
   .timer-box {
-    padding-block: 4px;
+    padding-block: 2px;
   }
 }
 
@@ -1660,51 +1639,102 @@ input[type='number']:focus {
   .wrap {
     max-width: 1100px;
   }
-
-  .session-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-    gap: var(--space-8);
-    align-items: start;
-  }
-
-  .session-images {
-    grid-column: 1;
-    order: 0;
-  }
-
-  .session-info-actions {
-    grid-column: 2;
-  }
-
-  .session-layout .dual-frame {
-    max-width: none;
-    margin-block-start: 0;
-  }
-
-  .session-layout .ex-img-dual {
-    max-height: 480px;
-  }
 }
 
-/* Session sticky footer: primary + secondary in one bar */
+/* Session fill-viewport shell */
 .session-screen {
+  --session-chrome: calc(12px + var(--safe-t) + max(16px, var(--safe-b)));
   display: flex;
   flex-direction: column;
-  min-height: 100svh;
-  min-height: 100dvh;
-  min-height: calc(100dvh - var(--safe-t));
+  height: calc(100dvh - var(--session-chrome));
+  max-height: calc(100dvh - var(--session-chrome));
+  min-height: 0;
+  overflow: hidden;
 }
 
 .session-scroll {
   flex: 1 1 auto;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.session-scroll > .session-layout,
+.session-scroll > .session-phase {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.session-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: var(--space-3);
+}
+
+.session-images {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.session-layout .dual-frame {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  align-items: center;
+  display: flex;
+}
+
+.session-layout .frame-item {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.session-layout .ex-img-dual {
+  /* Grow to column width, capped by available height — no forced tall gray box */
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  background: #1a1a1a;
+}
+
+.session-layout .frame-label {
+  flex: 0 0 auto;
+}
+
+.session-info-actions {
+  flex: 0 0 auto;
+}
+
+.session-phase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-height: 0;
+  overflow: auto;
 }
 
 .session-sticky {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  flex-shrink: 0;
 }
 
 .session-sticky .actions,
@@ -1733,13 +1763,17 @@ input[type='number']:focus {
     padding-bottom: 0;
   }
 
+  .session-screen {
+    /* body still has top padding; bottom pad is 0 on mobile */
+    --session-chrome: calc(12px + var(--safe-t));
+  }
+
   .actions-sticky {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     background: var(--bg);
-    /* Extra bottom inset: home indicator + breathing room above mobile browser toolbars */
     --sticky-pad-bottom: max(20px, var(--safe-b));
     padding: var(--space-3) var(--space-4) var(--sticky-pad-bottom);
     border-top: 1px solid transparent;
@@ -1754,24 +1788,180 @@ input[type='number']:focus {
    * primary row (56) + gap (8) + secondary compact (44) + pad top + pad bottom + slack
    */
   .actions-sticky-spacer {
+    flex: 0 0 auto;
     height: calc(
       var(--tap) + 44px + var(--space-2) + var(--space-3) + max(20px, var(--safe-b)) + var(--space-3)
     );
   }
 
-  /* Overview / done sticky can be 2–3 stacked full buttons */
   .overview-sticky-spacer,
   .actions-sticky-spacer.overview-sticky-spacer {
     height: calc((var(--tap) * 3) + (10px * 2) + var(--space-3) + max(20px, var(--safe-b)) + var(--space-2));
   }
-}
 
-@media (min-width: 601px) {
-  .session-sticky {
-    margin-top: var(--space-4);
+  /* Stack DEPART/FIN full-width so landscape shots can grow with flex height */
+  .session-layout .dual-frame {
+    max-width: none;
+    flex-direction: column;
+    gap: var(--space-2);
   }
 
+  .session-layout .frame-arrow {
+    transform: rotate(90deg);
+    line-height: 1;
+  }
+
+  .session-layout .frame-item {
+    flex: 1 1 0;
+    width: 100%;
+    min-height: 0;
+  }
+
+  .session-layout .ex-img-dual {
+    width: 100%;
+    height: 0;
+    flex: 1 1 auto;
+    min-height: 72px;
+    max-height: none;
+    object-fit: contain;
+  }
+
+  .session-info-actions {
+    flex: 0 0 auto;
+  }
+
+  /* Keep set typography readable but leave room for images */
+  .session-layout .hero-ex h2 {
+    font-size: clamp(1.75rem, 7.5vw, 2.125rem);
+  }
+
+  .session-layout .set-badge {
+    font-size: clamp(1.375rem, 5.5vw, 1.625rem);
+    margin-top: 10px;
+    padding: 8px 14px;
+  }
+
+  .session-layout .meta-line {
+    font-size: clamp(1.375rem, 5.8vw, 1.75rem);
+    margin-top: 10px;
+  }
+}
+
+/* Desktop / tablet: in-flow footer, 2-col fill height, no page scroll */
+@media (min-width: 601px) {
   .actions-sticky-spacer {
     display: none;
+  }
+
+  .session-sticky {
+    margin-top: var(--space-3);
+  }
+
+  .session-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: stretch;
+    height: 100%;
+  }
+
+  .session-layout--solo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .session-images {
+    grid-column: 1;
+    height: 100%;
+  }
+
+  .session-info-actions {
+    grid-column: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 0;
+    overflow: auto;
+    text-align: center;
+  }
+
+  .session-layout--solo .session-info-actions {
+    grid-column: 1;
+  }
+
+  .session-layout .dual-frame {
+    height: 100%;
+    gap: var(--space-4);
+    align-items: stretch;
+  }
+
+  .session-layout .frame-item {
+    height: 100%;
+  }
+
+  /* Fill the left column height; contain keeps aspect without cropping */
+  .session-layout .ex-img-dual {
+    width: 100%;
+    height: 0;
+    flex: 1 1 auto;
+    max-height: none;
+    object-fit: contain;
+  }
+
+  .session-layout .frame-arrow {
+    align-self: center;
+  }
+
+  /* Compact sticky chrome on short desktop windows so content keeps the pixels */
+  .session-sticky .btn-primary,
+  .session-sticky .btn {
+    min-height: 48px;
+  }
+
+  .session-sticky .btn-compact {
+    min-height: 40px;
+    font-size: 13px;
+  }
+
+  .session-phase--rest {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-6);
+  }
+
+  .session-phase--rest .timer-box,
+  .session-phase--rest .next-preview {
+    margin: 0;
+  }
+
+  .session-phase--rest .next-preview {
+    max-width: min(420px, 100%);
+    text-align: center;
+  }
+
+  .session-inline-adj {
+    width: min(280px, 100%);
+  }
+
+  /* Slightly larger set info on wide screens */
+  .session-info-actions .hero-ex h2 {
+    font-size: clamp(2rem, 3.2vw, 2.75rem);
+  }
+
+  .session-info-actions .set-badge {
+    font-size: clamp(1.5rem, 2.4vw, 2rem);
+  }
+
+  .session-info-actions .meta-line {
+    font-size: clamp(1.5rem, 2.6vw, 2.125rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .session-layout {
+    gap: var(--space-8);
   }
 }

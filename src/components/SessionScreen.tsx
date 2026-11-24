@@ -173,6 +173,8 @@ export function SessionScreen({
             state={state}
             currentStep={currentStep}
             onAdjustTimer={onAdjustTimer}
+            getIllustration={getIllustration}
+            setLightbox={setLightbox}
           />
         ) : (
           <ReadyPhase
@@ -245,7 +247,7 @@ function RestPhase({
   const offset = CIRC * (1 - p);
 
   return (
-    <>
+    <div className="session-phase session-phase--rest">
       <div className="timer-box">
         <div className="ring-wrap rest">
           <svg viewBox="0 0 108 108" aria-hidden="true">
@@ -275,7 +277,55 @@ function RestPhase({
           <p className="next-preview-meta">{nextExercise.load}</p>
         </div>
       )}
-    </>
+    </div>
+  );
+}
+
+function SessionDualFrame({
+  imageUrls,
+  exerciseName,
+  transitionKey,
+  onOpen,
+}: {
+  imageUrls: string[];
+  exerciseName: string;
+  transitionKey: number;
+  onOpen: () => void;
+}) {
+  if (imageUrls.length === 0) return null;
+  return (
+    <div className="session-images">
+      <div
+        className="dual-frame"
+        style={{ viewTransitionName: `exercise-image-${transitionKey}`, cursor: 'pointer' } as React.CSSProperties}
+        onClick={onOpen}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onOpen();
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-label="Agrandir les images"
+      >
+        <div className="frame-item">
+          <img src={imageUrls[0]} alt={`${exerciseName} - départ`} className="ex-img-dual" />
+          {imageUrls.length > 1 && <div className="frame-label">départ</div>}
+        </div>
+        {imageUrls.length > 1 && (
+          <>
+            <div className="frame-arrow" aria-hidden>
+              →
+            </div>
+            <div className="frame-item">
+              <img src={imageUrls[1]} alt={`${exerciseName} - fin`} className="ex-img-dual" />
+              <div className="frame-label">fin</div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -283,10 +333,14 @@ function WorkPhase({
   state,
   currentStep,
   onAdjustTimer,
+  getIllustration,
+  setLightbox,
 }: {
   state: SessionState;
   currentStep: SequenceStep;
   onAdjustTimer: (deltaSec: number) => void;
+  getIllustration: (name: string) => ExerciseIllustration | null;
+  setLightbox: (lightbox: { images: string[]; name: string } | null) => void;
 }) {
   const [remaining, setRemaining] = useState(Math.max(0, (state.endsAt || 0) - Date.now()));
 
@@ -302,57 +356,69 @@ function WorkPhase({
   const offset = CIRC * (1 - p);
   const ex = state.exercises[currentStep.exerciseIndex!];
   const setNum = (currentStep.setIndex ?? 0) + 1;
+  const illustration = getIllustration(ex.name);
+  const imageUrls = illustration?.imageUrls?.filter(Boolean) ?? [];
+  const currentExIndex = state.exercises.findIndex((e) => e === ex);
 
   return (
-    <>
-      <div className="timer-box">
-        <div className="ring-wrap">
-          <svg viewBox="0 0 108 108" aria-hidden="true">
-            <circle className="ring-track" cx="54" cy="54" r="48"></circle>
-            <circle
-              className="ring-val"
-              cx="54"
-              cy="54"
-              r="48"
-              style={{ strokeDasharray: CIRC, strokeDashoffset: offset }}
-            ></circle>
-          </svg>
-          <div className="ring-center">
-            <div className="time">{formatDuration(remaining)}</div>
-            <div className="sub">Effort</div>
+    <div className={`session-layout session-layout--work${imageUrls.length ? '' : ' session-layout--solo'}`}>
+      <SessionDualFrame
+        imageUrls={imageUrls}
+        exerciseName={ex.name}
+        transitionKey={currentExIndex}
+        onOpen={() => setLightbox({ images: imageUrls, name: ex.name })}
+      />
+
+      <div className="session-info-actions">
+        <div className="timer-box">
+          <div className="ring-wrap">
+            <svg viewBox="0 0 108 108" aria-hidden="true">
+              <circle className="ring-track" cx="54" cy="54" r="48"></circle>
+              <circle
+                className="ring-val"
+                cx="54"
+                cy="54"
+                r="48"
+                style={{ strokeDasharray: CIRC, strokeDashoffset: offset }}
+              ></circle>
+            </svg>
+            <div className="ring-center">
+              <div className="time">{formatDuration(remaining)}</div>
+              <div className="sub">Effort</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="hero-ex hero-ex--work">
-        <h2>{ex.name}</h2>
-        <div className="set-badge">
-          Série {setNum}/{ex.sets}
+        <div className="hero-ex hero-ex--work">
+          <h2>{ex.name}</h2>
+          <div className="set-badge">
+            Série {setNum}/{ex.sets}
+          </div>
+          <div className="meta-line">
+            <span className="meta-primary">
+              {ex.durationSec != null ? formatDurationLabel(ex.durationSec) : `${ex.reps} reps`}
+            </span>
+            {ex.weight && (
+              <>
+                <span className="meta-sep" aria-hidden>
+                  ·
+                </span>
+                <span className="meta-primary">{ex.weight}</span>
+              </>
+            )}
+          </div>
         </div>
-        <div className="meta-line">
-          <span className="meta-primary">
-            {ex.durationSec != null ? formatDurationLabel(ex.durationSec) : `${ex.reps} reps`}
-          </span>
-          {ex.weight && (
-            <>
-              <span className="meta-sep" aria-hidden>
-                ·
-              </span>
-              <span className="meta-primary">{ex.weight}</span>
-            </>
-          )}
-        </div>
-      </div>
 
-      <div className="adj" style={{ gridTemplateColumns: '1fr 1fr' }}>
-        <button type="button" className="btn btn-ghost" onClick={() => onAdjustTimer(-15)}>
-          −15 s
-        </button>
-        <button type="button" className="btn btn-ghost" onClick={() => onAdjustTimer(15)}>
-          +15 s
-        </button>
+        <div className="adj session-inline-adj" style={{ gridTemplateColumns: '1fr 1fr' }}>
+          <button type="button" className="btn btn-ghost" onClick={() => onAdjustTimer(-15)}>
+            −15 s
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={() => onAdjustTimer(15)}>
+            +15 s
+          </button>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -387,49 +453,13 @@ function ReadyPhase({
   const hasImages = imageUrls.length > 0;
 
   return (
-    <div className="session-layout">
-      {hasImages && (
-        <div className="session-images">
-          <div
-            className="dual-frame"
-            style={{ viewTransitionName: `exercise-image-${currentExIndex}`, cursor: 'pointer' } as React.CSSProperties}
-            onClick={() => setLightbox({ images: imageUrls, name: ex.name })}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                setLightbox({ images: imageUrls, name: ex.name });
-              }
-            }}
-            role="button"
-            tabIndex={0}
-            aria-label="Agrandir les images"
-          >
-            <div className="frame-item">
-              <img
-                src={imageUrls[0]}
-                alt={`${ex.name} - départ`}
-                className="ex-img-dual"
-              />
-              {imageUrls.length > 1 && <div className="frame-label">départ</div>}
-            </div>
-            {imageUrls.length > 1 && (
-              <>
-                <div className="frame-arrow" aria-hidden>
-                  →
-                </div>
-                <div className="frame-item">
-                  <img
-                    src={imageUrls[1]}
-                    alt={`${ex.name} - fin`}
-                    className="ex-img-dual"
-                  />
-                  <div className="frame-label">fin</div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+    <div className={`session-layout${hasImages ? '' : ' session-layout--solo'}`}>
+      <SessionDualFrame
+        imageUrls={imageUrls}
+        exerciseName={ex.name}
+        transitionKey={currentExIndex}
+        onOpen={() => setLightbox({ images: imageUrls, name: ex.name })}
+      />
 
       <div className="session-info-actions">
         <div className="hero-ex" style={{ viewTransitionName: 'exercise-header', position: 'relative' } as React.CSSProperties}>
