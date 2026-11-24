@@ -4,6 +4,7 @@ import { formatDuration, formatExerciseEffort } from '../utils/formatters';
 import { withViewTransition } from '../utils/viewTransition';
 import { Lightbox } from './Lightbox';
 import { ImagePicker } from './ImagePicker';
+import { StickyActionsBar, StickyActionsSpacer } from './StickyActionsBar';
 
 interface SessionScreenProps {
   state: SessionState;
@@ -185,24 +186,22 @@ export function SessionScreen({
             setPickerExercise={setPickerExercise}
           />
         )}
-        {/* Reserves space so scroll content never sits under the sticky footer */}
-        <div className="actions-sticky-spacer" aria-hidden />
+        <StickyActionsSpacer />
       </div>
 
-      <div
-        className="session-sticky actions-sticky"
-        style={{ viewTransitionName: 'action-area' } as React.CSSProperties}
-      >
-        {primaryActions}
-        <div className="actions duo session-sticky-secondary">
-          <button type="button" className="btn btn-ghost btn-compact" onClick={goOverview}>
-            Aperçu
-          </button>
-          <button type="button" className="btn btn-danger btn-compact" onClick={resetSession}>
-            Réinitialiser
-          </button>
-        </div>
-      </div>
+      <StickyActionsBar
+        primary={primaryActions}
+        secondary={
+          <>
+            <button type="button" className="btn btn-ghost btn-compact" onClick={goOverview}>
+              Aperçu
+            </button>
+            <button type="button" className="btn btn-danger btn-compact" onClick={resetSession}>
+              Réinitialiser
+            </button>
+          </>
+        }
+      />
 
       {lightbox && (
         <Lightbox

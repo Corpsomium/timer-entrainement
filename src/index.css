@@ -1750,6 +1750,10 @@ input[type='number']:focus {
   margin: 0;
 }
 
+.session-sticky-secondary .sticky-secondary-solo {
+  grid-column: 1 / -1;
+}
+
 .btn-compact {
   min-height: 44px;
   font-size: 14px;
@@ -1794,9 +1798,12 @@ input[type='number']:focus {
     );
   }
 
+  /* Overview / done: primary + secondary row (same chrome as session sticky) */
   .overview-sticky-spacer,
   .actions-sticky-spacer.overview-sticky-spacer {
-    height: calc((var(--tap) * 3) + (10px * 2) + var(--space-3) + max(20px, var(--safe-b)) + var(--space-2));
+    height: calc(
+      var(--tap) + 44px + var(--space-2) + var(--space-3) + max(20px, var(--safe-b)) + var(--space-3)
+    );
   }
 
   /* Stack DEPART/FIN full-width so landscape shots can grow with flex height */
@@ -1848,8 +1855,36 @@ input[type='number']:focus {
 
 /* Desktop / tablet: in-flow footer, 2-col fill height, no page scroll */
 @media (min-width: 601px) {
+  /* Session fill-viewport keeps its footer in-flow; spacer not needed */
   .actions-sticky-spacer {
     display: none;
+  }
+
+  /*
+   * Overview (and done) scroll the page — keep a fixed thumb-zone bar
+   * on desktop too, with a spacer so the last card stays reachable.
+   */
+  .actions-sticky-spacer.overview-sticky-spacer {
+    display: block;
+    height: calc(
+      var(--tap) + 44px + var(--space-2) + var(--space-3) + max(20px, var(--safe-b)) + var(--space-3)
+    );
+  }
+
+  .actions-sticky.overview-actions,
+  .actions-sticky.done-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg);
+    --sticky-pad-bottom: max(20px, var(--safe-b));
+    padding: var(--space-3) var(--space-4) var(--sticky-pad-bottom);
+    border-top: 1px solid transparent;
+    box-shadow:
+      0 -1px 0 var(--line),
+      0 -8px 24px rgba(0, 0, 0, 0.35);
+    z-index: 100;
   }
 
   .session-layout {

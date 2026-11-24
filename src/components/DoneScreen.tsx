@@ -1,5 +1,6 @@
 import type { SessionState } from '../types';
 import { formatClock, formatLoad } from '../utils/formatters';
+import { StickyActionsBar, StickyActionsSpacer } from './StickyActionsBar';
 
 interface DoneScreenProps {
   state: SessionState;
@@ -36,21 +37,31 @@ export function DoneScreen({ state, setState, onRestart, onShare }: DoneScreenPr
         })}
       </div>
 
-      <div className="actions-sticky-spacer overview-sticky-spacer" aria-hidden />
-      <div className="actions actions-sticky done-actions">
-        <button className="btn btn-primary" onClick={onRestart}>
-          Nouvelle séance
-        </button>
-        <button
-          className="btn btn-ghost"
-          onClick={() => setState((prev) => ({ ...prev, screen: 'input' }))}
-        >
-          Modifier le bloc
-        </button>
-        <button className="btn btn-ghost" onClick={onShare}>
-          Partager le lien
-        </button>
-      </div>
+      <StickyActionsSpacer className="overview-sticky-spacer" />
+      <StickyActionsBar
+        className="done-actions"
+        primary={
+          <div className="actions session-sticky-primary">
+            <button type="button" className="btn btn-primary" onClick={onRestart}>
+              Nouvelle séance
+            </button>
+          </div>
+        }
+        secondary={
+          <>
+            <button
+              type="button"
+              className="btn btn-ghost btn-compact"
+              onClick={() => setState((prev) => ({ ...prev, screen: 'input' }))}
+            >
+              Modifier le bloc
+            </button>
+            <button type="button" className="btn btn-ghost btn-compact" onClick={onShare}>
+              Partager le lien
+            </button>
+          </>
+        }
+      />
     </div>
   );
 }
