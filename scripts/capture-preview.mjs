@@ -44,7 +44,7 @@ async function gotoOverview(page) {
   await page.fill('#block', BLOCK);
   await page.fill('#rest', '45');
   await page.getByRole('button', { name: 'Charger la séance' }).click();
-  await page.getByRole('button', { name: /Commencer|Reprendre/ }).waitFor();
+  await page.getByRole('button', { name: /Démarrer|Commencer|Reprendre/ }).waitFor();
 }
 
 async function metrics(page, label) {
@@ -56,7 +56,17 @@ async function metrics(page, label) {
       clientH: document.documentElement.clientHeight,
       stickyTop: rect ? Math.round(rect.top) : null,
       stickyBottom: rect ? Math.round(rect.bottom) : null,
+      stickyHeight: rect ? Math.round(rect.height) : null,
       stickyFixed: sticky ? getComputedStyle(sticky).position : null,
+      secondaryInSticky: !!document.querySelector(
+        '.overview-actions .session-sticky-secondary:not([style*="display: none"])'
+      ),
+      secondaryFlowVisible: (() => {
+        const el = document.querySelector('.overview-secondary-flow');
+        if (!el) return false;
+        const s = getComputedStyle(el);
+        return s.display !== 'none' && s.visibility !== 'hidden';
+      })(),
       primaryVisible: !!document.querySelector(
         '.actions-sticky .btn-primary, .session-sticky .btn-primary'
       ),
@@ -76,7 +86,7 @@ async function runStart(browser, { w, h, prefix }) {
 async function runResume(browser, { w, h, prefix }) {
   const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
   await gotoOverview(page);
-  await page.getByRole('button', { name: 'Commencer' }).click();
+  await page.getByRole('button', { name: /Démarrer|Commencer/ }).click();
   await page.locator('.session-screen').waitFor();
   const done = page.getByRole('button', { name: /Série terminée|Démarrer|Terminer la série/ });
   if (await done.isVisible().catch(() => false)) {

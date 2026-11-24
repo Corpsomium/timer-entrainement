@@ -1798,12 +1798,33 @@ input[type='number']:focus {
     );
   }
 
-  /* Overview / done: primary + secondary row (same chrome as session sticky) */
+  /*
+   * Overview mobile: compact single-row primary (~56–64px + safe-area).
+   * Secondaries stay in .overview-secondary-flow above the spacer.
+   */
+  .overview-actions {
+    gap: 0;
+    /* ~60px chrome (8 + 44 + 8) + device safe-area */
+    --sticky-pad-bottom: max(8px, var(--safe-b));
+    padding: 8px var(--space-4) var(--sticky-pad-bottom);
+  }
+
+  .overview-actions .session-sticky-secondary {
+    display: none;
+  }
+
+  .overview-actions .session-sticky-primary {
+    margin: 0;
+  }
+
+  .overview-actions .session-sticky-primary .btn-primary {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
   .overview-sticky-spacer,
   .actions-sticky-spacer.overview-sticky-spacer {
-    height: calc(
-      var(--tap) + 44px + var(--space-2) + var(--space-3) + max(20px, var(--safe-b)) + var(--space-3)
-    );
+    height: calc(8px + 44px + max(8px, var(--safe-b)) + var(--space-2));
   }
 
   /* Stack DEPART/FIN full-width so landscape shots can grow with flex height */
@@ -1863,7 +1884,12 @@ input[type='number']:focus {
   /*
    * Overview (and done) scroll the page — keep a fixed thumb-zone bar
    * on desktop too, with a spacer so the last card stays reachable.
+   * Desktop overview keeps the full primary + secondary sticky chrome.
    */
+  .overview-secondary-flow {
+    display: none;
+  }
+
   .actions-sticky-spacer.overview-sticky-spacer {
     display: block;
     height: calc(

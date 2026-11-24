@@ -179,6 +179,39 @@ export function OverviewScreen({
 
       <p className="hint audio-hint">{getAudioMuteHint()}</p>
 
+      {/* Mobile: secondaries stay in the list flow; desktop hides this (sticky has them). */}
+      <div className="actions overview-secondary-flow">
+        {midSession ? (
+          <>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => {
+                unlockAudio();
+                onStart();
+              }}
+            >
+              Recommencer
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => setState((prev) => ({ ...prev, screen: 'input' }))}
+            >
+              Modifier le bloc
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => setState((prev) => ({ ...prev, screen: 'input' }))}
+          >
+            Modifier le bloc
+          </button>
+        )}
+      </div>
+
       <StickyActionsSpacer className="overview-sticky-spacer" />
       <StickyActionsBar
         className="overview-actions"
@@ -204,7 +237,7 @@ export function OverviewScreen({
                   onStart();
                 }}
               >
-                Commencer
+                Démarrer
               </button>
             )}
           </div>
