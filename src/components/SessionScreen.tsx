@@ -169,7 +169,11 @@ export function SessionScreen({
         {isRest ? (
           <RestPhase state={state} nextExercise={currentStep.nextExercise} />
         ) : isWork ? (
-          <WorkPhase state={state} onAdjustTimer={onAdjustTimer} />
+          <WorkPhase
+            state={state}
+            currentStep={currentStep}
+            onAdjustTimer={onAdjustTimer}
+          />
         ) : (
           <ReadyPhase
             state={state}
@@ -264,10 +268,11 @@ function RestPhase({
       {nextExercise && (
         <div className="next-preview" style={{ viewTransitionName: 'next-preview' } as React.CSSProperties}>
           <div className="kicker">Prochain</div>
-          <b>{nextExercise.name}</b>
-          <span>
-            Série {nextExercise.setIndex + 1}/{nextExercise.totalSets} · {nextExercise.load}
-          </span>
+          <p className="next-preview-name">{nextExercise.name}</p>
+          <p className="next-preview-set">
+            Série {nextExercise.setIndex + 1}/{nextExercise.totalSets}
+          </p>
+          <p className="next-preview-meta">{nextExercise.load}</p>
         </div>
       )}
     </>
@@ -276,9 +281,11 @@ function RestPhase({
 
 function WorkPhase({
   state,
+  currentStep,
   onAdjustTimer,
 }: {
   state: SessionState;
+  currentStep: SequenceStep;
   onAdjustTimer: (deltaSec: number) => void;
 }) {
   const [remaining, setRemaining] = useState(Math.max(0, (state.endsAt || 0) - Date.now()));
@@ -293,6 +300,8 @@ function WorkPhase({
   const total = Math.max(1, (state.endsAt || 0) - (state.timerStartedAt || 0));
   const p = Math.min(1, Math.max(0, remaining / total));
   const offset = CIRC * (1 - p);
+  const ex = state.exercises[currentStep.exerciseIndex!];
+  const setNum = (currentStep.setIndex ?? 0) + 1;
 
   return (
     <>
@@ -312,6 +321,26 @@ function WorkPhase({
             <div className="time">{formatDuration(remaining)}</div>
             <div className="sub">Effort</div>
           </div>
+        </div>
+      </div>
+
+      <div className="hero-ex hero-ex--work">
+        <h2>{ex.name}</h2>
+        <div className="set-badge">
+          Série {setNum}/{ex.sets}
+        </div>
+        <div className="meta-line">
+          <span className="meta-primary">
+            {ex.durationSec != null ? formatDurationLabel(ex.durationSec) : `${ex.reps} reps`}
+          </span>
+          {ex.weight && (
+            <>
+              <span className="meta-sep" aria-hidden>
+                ·
+              </span>
+              <span className="meta-primary">{ex.weight}</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -419,10 +448,17 @@ function ReadyPhase({
             Série {setNum}/{totalSets}
           </div>
           <div className="meta-line">
-            <strong>
+            <span className="meta-primary">
               {ex.durationSec != null ? formatDurationLabel(ex.durationSec) : `${ex.reps} reps`}
-            </strong>
-            {ex.weight && ` · ${ex.weight}`}
+            </span>
+            {ex.weight && (
+              <>
+                <span className="meta-sep" aria-hidden>
+                  ·
+                </span>
+                <span className="meta-primary">{ex.weight}</span>
+              </>
+            )}
           </div>
         </div>
       </div>
