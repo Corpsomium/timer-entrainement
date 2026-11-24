@@ -5,6 +5,7 @@ import { saveRest } from '../utils/storage';
 import { getAudioMuteHint, unlockAudio } from '../utils/audio';
 import { Lightbox } from './Lightbox';
 import { ImagePicker } from './ImagePicker';
+import { StickyActionsBar, StickyActionsSpacer } from './StickyActionsBar';
 
 interface OverviewScreenProps {
   state: SessionState;
@@ -178,20 +179,12 @@ export function OverviewScreen({
 
       <p className="hint audio-hint">{getAudioMuteHint()}</p>
 
-      <div className="actions-sticky-spacer overview-sticky-spacer" aria-hidden />
-      <div className="actions actions-sticky">
+      {/* Mobile: secondaries stay in the list flow; desktop hides this (sticky has them). */}
+      <div className="actions overview-secondary-flow">
         {midSession ? (
           <>
             <button
-              className="btn btn-primary"
-              onClick={() => {
-                unlockAudio();
-                onResume();
-              }}
-            >
-              Reprendre la séance
-            </button>
-            <button
+              type="button"
               className="btn btn-ghost"
               onClick={() => {
                 unlockAudio();
@@ -200,25 +193,87 @@ export function OverviewScreen({
             >
               Recommencer
             </button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => setState((prev) => ({ ...prev, screen: 'input' }))}
+            >
+              Modifier le bloc
+            </button>
           </>
         ) : (
           <button
-            className="btn btn-primary"
-            onClick={() => {
-              unlockAudio();
-              onStart();
-            }}
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => setState((prev) => ({ ...prev, screen: 'input' }))}
           >
-            Commencer
+            Modifier le bloc
           </button>
         )}
-        <button
-          className="btn btn-ghost"
-          onClick={() => setState((prev) => ({ ...prev, screen: 'input' }))}
-        >
-          Modifier le bloc
-        </button>
       </div>
+
+      <StickyActionsSpacer className="overview-sticky-spacer" />
+      <StickyActionsBar
+        className="overview-actions"
+        primary={
+          <div className="actions session-sticky-primary">
+            {midSession ? (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  unlockAudio();
+                  onResume();
+                }}
+              >
+                Reprendre
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  unlockAudio();
+                  onStart();
+                }}
+              >
+                Démarrer
+              </button>
+            )}
+          </div>
+        }
+        secondary={
+          midSession ? (
+            <>
+              <button
+                type="button"
+                className="btn btn-ghost btn-compact"
+                onClick={() => {
+                  unlockAudio();
+                  onStart();
+                }}
+              >
+                Recommencer
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-compact"
+                onClick={() => setState((prev) => ({ ...prev, screen: 'input' }))}
+              >
+                Modifier le bloc
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-ghost btn-compact sticky-secondary-solo"
+              onClick={() => setState((prev) => ({ ...prev, screen: 'input' }))}
+            >
+              Modifier le bloc
+            </button>
+          )
+        }
+      />
 
       {pickerExercise && (
         <ImagePicker

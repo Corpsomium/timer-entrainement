@@ -29,8 +29,8 @@ async function prepare(page) {
   await page.fill('#block', BLOCK);
   await page.fill('#rest', '45');
   await page.getByRole('button', { name: 'Charger la séance' }).click();
-  await page.getByRole('button', { name: 'Commencer' }).waitFor();
-  await page.getByRole('button', { name: 'Commencer' }).click();
+  await page.getByRole('button', { name: /Démarrer|Commencer/ }).waitFor();
+  await page.getByRole('button', { name: /Démarrer|Commencer/ }).click();
   await page.locator('.session-screen').waitFor();
   await page.locator('.hero-ex h2').waitFor();
 }
