@@ -2,9 +2,15 @@ import { useState, useEffect, type ReactNode } from 'react';
 import type { SessionState, SequenceStep, ExerciseIllustration, Exercise } from '../types';
 import type { EquipmentInventory, ExerciseEquipmentType } from '../types/equipment';
 import { formatDuration, formatExerciseEffort } from '../utils/formatters';
+import {
+  availableEquipmentTypeOptions,
+  coerceEquipmentType,
+} from '../utils/availableEquipmentTypes';
 import { deduceEquipmentType } from '../utils/deduceEquipmentType';
+import { updateSessionEquipmentType } from '../utils/equipmentTypePersistence';
 import { suggestLoadout } from '../utils/loadout';
 import { withViewTransition } from '../utils/viewTransition';
+import { EquipmentTypePicker } from './EquipmentTypePicker';
 import { Lightbox } from './Lightbox';
 import { ImagePicker } from './ImagePicker';
 import { LoadoutSuggestionView } from './LoadoutSuggestionView';
@@ -98,6 +104,10 @@ export function SessionScreen({
     }
   };
 
+  const onEquipmentTypeChange = (exerciseName: string, type: ExerciseEquipmentType) => {
+    setState((prev) => updateSessionEquipmentType(prev, exerciseName, type));
+  };
+
   const isRest = currentStep.type === 'rest';
   const isWork = !isRest && state.phase === 'work';
   const readyExercise =
@@ -189,6 +199,7 @@ export function SessionScreen({
             state={state}
             nextExercise={currentStep.nextExercise}
             inventory={inventory}
+            onEquipmentTypeChange={onEquipmentTypeChange}
           />
         ) : isWork ? (
           <WorkPhase
@@ -196,6 +207,7 @@ export function SessionScreen({
             currentStep={currentStep}
             inventory={inventory}
             onAdjustTimer={onAdjustTimer}
+            onEquipmentTypeChange={onEquipmentTypeChange}
             getIllustration={getIllustration}
             setLightbox={setLightbox}
           />
@@ -204,6 +216,7 @@ export function SessionScreen({
             state={state}
             currentStep={currentStep}
             inventory={inventory}
+            onEquipmentTypeChange={onEquipmentTypeChange}
             getIllustration={getIllustration}
             setLightbox={setLightbox}
             setPickerExercise={setPickerExercise}
@@ -257,6 +270,7 @@ function SetInfoBlock({
   weight,
   equipmentType,
   inventory,
+  onEquipmentTypeChange,
   kicker,
   editControl,
   className,
@@ -269,15 +283,21 @@ function SetInfoBlock({
   weight: string;
   equipmentType?: ExerciseEquipmentType;
   inventory?: EquipmentInventory;
+  onEquipmentTypeChange?: (type: ExerciseEquipmentType) => void;
   kicker?: string;
   editControl?: ReactNode;
   className?: string;
 }) {
-  const resolvedType =
+  const options = inventory ? availableEquipmentTypeOptions(inventory) : [];
+  const preferred =
     equipmentType || (inventory ? deduceEquipmentType(name, weight) : '');
-  const suggestion = inventory
-    ? suggestLoadout(inventory, resolvedType, weight)
-    : null;
+  const resolvedType = inventory
+    ? coerceEquipmentType(inventory, preferred)
+    : preferred;
+  const suggestion =
+    inventory && weight
+      ? suggestLoadout(inventory, resolvedType, weight)
+      : null;
 
   return (
     <div className={`hero-ex${className ? ` ${className}` : ''}`}>
@@ -298,7 +318,19 @@ function SetInfoBlock({
           </>
         ) : null}
       </div>
-      <LoadoutSuggestionView suggestion={suggestion} />
+      {inventory && onEquipmentTypeChange ? (
+        <div className="loadout-block">
+          <EquipmentTypePicker
+            options={options}
+            value={resolvedType}
+            onChange={onEquipmentTypeChange}
+            label={`Matériel pour ${name}`}
+          />
+          <LoadoutSuggestionView suggestion={suggestion} />
+        </div>
+      ) : (
+        <LoadoutSuggestionView suggestion={suggestion} />
+      )}
     </div>
   );
 }
@@ -307,10 +339,12 @@ function RestPhase({
   state,
   nextExercise,
   inventory,
+  onEquipmentTypeChange,
 }: {
   state: SessionState;
   nextExercise?: SequenceStep['nextExercise'];
   inventory: EquipmentInventory;
+  onEquipmentTypeChange: (exerciseName: string, type: ExerciseEquipmentType) => void;
 }) {
   const [remaining, setRemaining] = useState(Math.max(0, (state.endsAt || 0) - Date.now()));
 
@@ -358,8 +392,12 @@ function RestPhase({
             reps={nextExercise.reps}
             durationSec={nextExercise.durationSec}
             weight={nextExercise.weight}
-            equipmentType={nextExercise.equipmentType}
+            equipmentType={
+              state.exercises.find((e) => e.name === nextExercise.name)?.equipmentType ??
+              nextExercise.equipmentType
+            }
             inventory={inventory}
+            onEquipmentTypeChange={(type) => onEquipmentTypeChange(nextExercise.name, type)}
             kicker="Prochain"
           />
         </div>
@@ -421,6 +459,7 @@ function WorkPhase({
   currentStep,
   inventory,
   onAdjustTimer,
+  onEquipmentTypeChange,
   getIllustration,
   setLightbox,
 }: {
@@ -428,6 +467,7 @@ function WorkPhase({
   currentStep: SequenceStep;
   inventory: EquipmentInventory;
   onAdjustTimer: (deltaSec: number) => void;
+  onEquipmentTypeChange: (exerciseName: string, type: ExerciseEquipmentType) => void;
   getIllustration: (name: string) => ExerciseIllustration | null;
   setLightbox: (lightbox: { images: string[]; name: string } | null) => void;
 }) {
@@ -488,6 +528,7 @@ function WorkPhase({
           weight={ex.weight}
           equipmentType={ex.equipmentType}
           inventory={inventory}
+          onEquipmentTypeChange={(type) => onEquipmentTypeChange(ex.name, type)}
         />
 
         <div className="adj session-inline-adj" style={{ gridTemplateColumns: '1fr 1fr' }}>
@@ -507,6 +548,7 @@ function ReadyPhase({
   state,
   currentStep,
   inventory,
+  onEquipmentTypeChange,
   getIllustration,
   setLightbox,
   setPickerExercise,
@@ -514,6 +556,7 @@ function ReadyPhase({
   state: SessionState;
   currentStep: SequenceStep;
   inventory: EquipmentInventory;
+  onEquipmentTypeChange: (exerciseName: string, type: ExerciseEquipmentType) => void;
   getIllustration: (name: string) => ExerciseIllustration | null;
   setLightbox: (lightbox: { images: string[]; name: string } | null) => void;
   setPickerExercise: (exercise: Exercise | null) => void;
@@ -555,6 +598,7 @@ function ReadyPhase({
             weight={ex.weight}
             equipmentType={ex.equipmentType}
             inventory={inventory}
+            onEquipmentTypeChange={(type) => onEquipmentTypeChange(ex.name, type)}
             kicker={kicker}
             editControl={
               <button

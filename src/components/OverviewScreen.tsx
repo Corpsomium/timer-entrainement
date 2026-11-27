@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import type { SessionState, Exercise, ExerciseIllustration, ExerciseEquipmentType } from '../types';
+import type { EquipmentInventory } from '../types/equipment';
 import { EXERCISE_EQUIPMENT_OPTIONS } from '../types/equipment';
+import { availableEquipmentTypeOptions } from '../utils/availableEquipmentTypes';
+import { updateSessionEquipmentType } from '../utils/equipmentTypePersistence';
 import { formatLoad } from '../utils/formatters';
-import {
-  normalizeExerciseKey,
-  loadEquipmentTypeOverrides,
-  saveEquipmentTypeOverrides,
-  saveRest,
-} from '../utils/storage';
+import { saveRest } from '../utils/storage';
 import { getAudioMuteHint, unlockAudio } from '../utils/audio';
 import { Lightbox } from './Lightbox';
 import { ImagePicker } from './ImagePicker';
@@ -16,6 +14,7 @@ import { StickyActionsBar, StickyActionsSpacer } from './StickyActionsBar';
 interface OverviewScreenProps {
   state: SessionState;
   setState: React.Dispatch<React.SetStateAction<SessionState>>;
+  inventory: EquipmentInventory;
   onStart: () => void;
   onResume: () => void;
   onShare: () => void;
@@ -27,6 +26,7 @@ interface OverviewScreenProps {
 export function OverviewScreen({
   state,
   setState,
+  inventory,
   onStart,
   onResume,
   onShare,
@@ -175,17 +175,11 @@ export function OverviewScreen({
                   index={item.index}
                   illustration={getIllustration(item.exercise.name)}
                   onImageChange={setPickerExercise}
+                  inventory={inventory}
                   onEquipmentTypeChange={(type) => {
-                    const key = normalizeExerciseKey(item.exercise.name);
-                    const map = loadEquipmentTypeOverrides();
-                    map[key] = type;
-                    saveEquipmentTypeOverrides(map);
-                    setState((prev) => ({
-                      ...prev,
-                      exercises: prev.exercises.map((ex, i) =>
-                        i === item.index ? { ...ex, equipmentType: type || undefined } : ex
-                      ),
-                    }));
+                    setState((prev) =>
+                      updateSessionEquipmentType(prev, item.exercise.name, type)
+                    );
                   }}
                 />
               ))}
@@ -197,18 +191,11 @@ export function OverviewScreen({
               index={group.exercises[0].index}
               illustration={getIllustration(group.exercises[0].exercise.name)}
               onImageChange={setPickerExercise}
+              inventory={inventory}
               onEquipmentTypeChange={(type) => {
-                const idx = group.exercises[0].index;
-                const key = normalizeExerciseKey(group.exercises[0].exercise.name);
-                const map = loadEquipmentTypeOverrides();
-                map[key] = type;
-                saveEquipmentTypeOverrides(map);
-                setState((prev) => ({
-                  ...prev,
-                  exercises: prev.exercises.map((ex, i) =>
-                    i === idx ? { ...ex, equipmentType: type || undefined } : ex
-                  ),
-                }));
+                setState((prev) =>
+                  updateSessionEquipmentType(prev, group.exercises[0].exercise.name, type)
+                );
               }}
             />
           )
@@ -330,15 +317,22 @@ function ExerciseCard({
   exercise,
   index,
   illustration,
+  inventory,
   onImageChange,
   onEquipmentTypeChange,
 }: {
   exercise: Exercise;
   index: number;
   illustration: ExerciseIllustration | null;
+  inventory: EquipmentInventory;
   onImageChange: (exercise: Exercise) => void;
   onEquipmentTypeChange: (type: ExerciseEquipmentType) => void;
 }) {
+  const equipOptions = availableEquipmentTypeOptions(inventory);
+  // Keep full list labels for overview, but only values offered by inventory (+ hide)
+  const selectOptions = EXERCISE_EQUIPMENT_OPTIONS.filter(
+    (o) => !o.value || equipOptions.some((e) => e.value === o.value)
+  );
   const [expanded, setExpanded] = useState(false);
   const [lightbox, setLightbox] = useState<{ images: string[]; name: string } | null>(null);
   
@@ -433,7 +427,7 @@ function ExerciseCard({
                     onEquipmentTypeChange(e.target.value as ExerciseEquipmentType)
                   }
                 >
-                  {EXERCISE_EQUIPMENT_OPTIONS.map((o) => (
+                  {selectOptions.map((o) => (
                     <option key={o.value || 'empty'} value={o.value}>
                       {o.label}
                     </option>

@@ -2329,3 +2329,61 @@ input[type='number']:focus {
     padding: 0 5px;
   }
 }
+
+/* —— Session equipment type chips —— */
+.loadout-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: var(--space-2);
+  max-width: 100%;
+}
+
+.equip-picker {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.equip-chip {
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  touch-action: manipulation;
+}
+
+.equip-chip--active {
+  background: var(--lime);
+  color: #111;
+  border-color: transparent;
+}
+
+.equip-chip--mute:not(.equip-chip--active) {
+  opacity: 0.85;
+}
+
+.equip-chip:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+
+@media (max-width: 600px) {
+  .equip-chip {
+    min-height: 36px;
+    padding: 0 11px;
+    font-size: 12px;
+  }
+
+  .loadout-block {
+    gap: 6px;
+  }
+}

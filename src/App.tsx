@@ -129,6 +129,7 @@ function App() {
           <OverviewScreen
             state={state}
             setState={setState}
+            inventory={equipment.inventory}
             onStart={() => startSessionWithTransition(false)}
             onResume={() => startSessionWithTransition(true)}
             onShare={handleShare}
