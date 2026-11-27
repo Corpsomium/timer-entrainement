@@ -10,16 +10,14 @@ import { suggestLoadout } from './loadout';
 import { loadEquipmentTypeOverrides } from './storage';
 
 describe('availableEquipmentTypeOptions', () => {
-  it('only offers haltères from default kit (+ hide options)', () => {
+  it('only offers haltères from default kit + Aucun (no Corps/Bande chips)', () => {
     const opts = availableEquipmentTypeOptions(createDefaultInventory());
     const values = opts.map((o) => o.value);
-    expect(values).toContain('haltères');
+    expect(values).toEqual(['haltères', 'autre']);
+    expect(values).not.toContain('poids_du_corps');
+    expect(values).not.toContain('bande');
     expect(values).not.toContain('barre_droite');
-    expect(values).not.toContain('barre_ez');
     expect(values).not.toContain('kettlebell');
-    expect(values).toEqual(
-      expect.arrayContaining(['poids_du_corps', 'bande', 'autre'])
-    );
   });
 
   it('includes kettlebell and bars when present in inventory', () => {
@@ -44,10 +42,7 @@ describe('availableEquipmentTypeOptions', () => {
       kettlebells: [{ id: 'k', weightKg: 16, quantity: 2 }],
     };
     const values = availableEquipmentTypeOptions(inv).map((o) => o.value);
-    expect(values).toEqual(
-      expect.arrayContaining(['barre_droite', 'barre_ez', 'kettlebell'])
-    );
-    expect(values).not.toContain('haltères');
+    expect(values).toEqual(['barre_droite', 'barre_ez', 'kettlebell', 'autre']);
   });
 });
 
@@ -62,8 +57,10 @@ describe('coerceEquipmentType', () => {
     expect(coerceEquipmentType(kit, 'barre_droite')).toBe('haltères');
   });
 
-  it('keeps hide options', () => {
-    expect(coerceEquipmentType(kit, 'bande')).toBe('bande');
+  it('maps bande / poids_du_corps to Aucun; empty defaults to haltères', () => {
+    expect(coerceEquipmentType(kit, 'bande')).toBe('autre');
+    expect(coerceEquipmentType(kit, 'poids_du_corps')).toBe('autre');
+    expect(coerceEquipmentType(kit, '')).toBe('haltères');
     expect(coerceEquipmentType(kit, 'autre')).toBe('autre');
   });
 });
@@ -90,24 +87,20 @@ describe('equipment type persistence + recalc', () => {
       },
     ];
 
-    const next = applyEquipmentTypeToExercises(exercises, 'Développé incliné', 'bande');
-    expect(next[0].equipmentType).toBe('bande');
+    const next = applyEquipmentTypeToExercises(exercises, 'Développé incliné', 'autre');
+    expect(next[0].equipmentType).toBe('autre');
     expect(next[1].equipmentType).toBe('haltères');
-    expect(loadEquipmentTypeOverrides()['développé incliné']).toBe('bande');
+    expect(loadEquipmentTypeOverrides()['développé incliné']).toBe('autre');
   });
 
-  it('recalculates loadout when type changes; hide types clear suggestion', () => {
+  it('recalculates loadout when type changes; Aucun clears suggestion', () => {
     const kit = createDefaultInventory();
     const exact = suggestLoadout(kit, 'haltères', '2x15kg');
     expect(exact?.exact).toBe(true);
 
-    const hidden = suggestLoadout(kit, 'bande', '2x15kg');
-    expect(hidden).toBeNull();
-
-    const none = suggestLoadout(kit, 'autre', '2x15kg');
-    expect(none).toBeNull();
-
-    const corps = suggestLoadout(kit, 'poids_du_corps', '2x15kg');
-    expect(corps).toBeNull();
+    expect(suggestLoadout(kit, 'autre', '2x15kg')).toBeNull();
+    // Legacy stored types still hide calc
+    expect(suggestLoadout(kit, 'bande', '2x15kg')).toBeNull();
+    expect(suggestLoadout(kit, 'poids_du_corps', '2x15kg')).toBeNull();
   });
 });

@@ -60,14 +60,13 @@ try {
     const picker = page.locator('.equip-picker');
     if (OUT === 'after' && (await picker.count()) > 0) {
       await shot(page, `${vp.prefix}-picker`);
-      const corps = page.getByRole('radio', { name: 'Corps' });
-      if (await corps.count()) {
-        await corps.click();
+      const aucun = page.getByRole('radio', { name: 'Aucun' });
+      if (await aucun.count()) {
+        await aucun.click();
         await page.waitForTimeout(200);
         await shot(page, `${vp.prefix}-changed`);
       } else {
-        // fallback: click second chip
-        await picker.locator('button').nth(1).click();
+        await picker.locator('button').last().click();
         await shot(page, `${vp.prefix}-changed`);
       }
     }

@@ -9,15 +9,16 @@ export type EquipmentTypeOption = {
   calculates: boolean;
 };
 
-const HIDE_OPTIONS: EquipmentTypeOption[] = [
-  { value: 'poids_du_corps', label: 'Poids du corps', shortLabel: 'Corps', calculates: false },
-  { value: 'bande', label: 'Bande', shortLabel: 'Bande', calculates: false },
-  { value: 'autre', label: 'Aucun', shortLabel: 'Aucun', calculates: false },
-];
+const AUCUN: EquipmentTypeOption = {
+  value: 'autre',
+  label: 'Aucun',
+  shortLabel: 'Aucun',
+  calculates: false,
+};
 
 /**
  * Equipment types the user can pick during a session:
- * only bar/KB kinds present in inventory, plus hide options.
+ * only bar/KB kinds present in inventory, plus « Aucun » to hide the loadout.
  */
 export function availableEquipmentTypeOptions(
   inventory: EquipmentInventory
@@ -62,10 +63,14 @@ export function availableEquipmentTypeOptions(
     });
   }
 
-  return [...options, ...HIDE_OPTIONS];
+  return [...options, AUCUN];
 }
 
-/** Clamp a stored/deduced type to something the inventory can offer. */
+/**
+ * Map stored/deduced type onto a chip value.
+ * bande / poids_du_corps → Aucun (no calc, no dedicated chip).
+ * Empty / missing bar kinds → first calculating option in the kit.
+ */
 export function coerceEquipmentType(
   inventory: EquipmentInventory,
   preferred: ExerciseEquipmentType | undefined
@@ -73,7 +78,9 @@ export function coerceEquipmentType(
   const options = availableEquipmentTypeOptions(inventory);
   const values = new Set(options.map((o) => o.value));
   if (preferred && values.has(preferred)) return preferred;
-  // Prefer first calculating option (usually haltères)
+  if (preferred === 'bande' || preferred === 'poids_du_corps') {
+    return 'autre';
+  }
   const calc = options.find((o) => o.calculates);
   return calc?.value ?? 'autre';
 }
