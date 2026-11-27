@@ -28,6 +28,31 @@ async function shot(page, name) {
   console.log('saved', p1);
 }
 
+async function assertNoHOverflow(page, label) {
+  const overflow = await page.evaluate(() => {
+    const doc = document.documentElement;
+    const body = document.body;
+    return {
+      doc: { sw: doc.scrollWidth, cw: doc.clientWidth },
+      body: { sw: body.scrollWidth, cw: body.clientWidth },
+      wrap: (() => {
+        const w = document.querySelector('.wrap');
+        return w ? { sw: w.scrollWidth, cw: w.clientWidth } : null;
+      })(),
+    };
+  });
+  const bad = [];
+  if (overflow.doc.sw > overflow.doc.cw) bad.push(`html ${overflow.doc.sw}>${overflow.doc.cw}`);
+  if (overflow.body.sw > overflow.body.cw) bad.push(`body ${overflow.body.sw}>${overflow.body.cw}`);
+  if (overflow.wrap && overflow.wrap.sw > overflow.wrap.cw) {
+    bad.push(`.wrap ${overflow.wrap.sw}>${overflow.wrap.cw}`);
+  }
+  if (bad.length) {
+    throw new Error(`Horizontal overflow (${label}): ${bad.join('; ')}`);
+  }
+  console.log('ok no h-overflow', label, overflow);
+}
+
 async function seedOverview(page) {
   await page.addInitScript(() => {
     document.startViewTransition = undefined;
@@ -70,10 +95,43 @@ try {
     } else {
       await page.getByRole('button', { name: 'Bloc', exact: true }).click();
       await page.locator('#block').waitFor();
+
+      // Loaded session → Retour à l'aperçu must remain
+      await page.getByRole('button', { name: "Retour à l'aperçu" }).waitFor();
+
+      // Label + compact clear on one row (or wrap), button not full-bleed
+      const row = await page.evaluate(() => {
+        const label = document.querySelector('label[for="block"]');
+        const btn = [...document.querySelectorAll('button')].find((b) =>
+          b.textContent?.trim() === 'Tout vider'
+        );
+        if (!label || !btn) return { ok: false, reason: 'missing label/btn' };
+        const lr = label.getBoundingClientRect();
+        const br = btn.getBoundingClientRect();
+        return {
+          ok: true,
+          labelText: label.textContent?.trim(),
+          labelW: Math.round(lr.width),
+          btnW: Math.round(br.width),
+          btnLeft: Math.round(br.left),
+          vw: window.innerWidth,
+        };
+      });
+      if (!row.ok) throw new Error(`field-row missing (${vp.prefix})`);
+      if (row.labelText !== 'Votre bloc') {
+        throw new Error(`label text="${row.labelText}" (${vp.prefix})`);
+      }
+      if (row.btnW > row.vw * 0.55) {
+        throw new Error(`Tout vider too wide: ${row.btnW}px on ${row.vw} (${vp.prefix})`);
+      }
+      console.log('ok field-row', vp.prefix, row);
+
+      await assertNoHOverflow(page, `${vp.prefix}-editor`);
       await shot(page, `${vp.prefix}-editor`);
 
       await page.getByRole('button', { name: 'Tout vider' }).click();
       await page.getByRole('dialog').waitFor();
+      await assertNoHOverflow(page, `${vp.prefix}-confirm`);
       await shot(page, `${vp.prefix}-confirm-clear`);
 
       await page
@@ -85,6 +143,11 @@ try {
         const el = document.querySelector('#block');
         return el && el.value === '';
       });
+      // After clear, no loaded exercises → Retour disappears
+      if (await page.getByRole('button', { name: "Retour à l'aperçu" }).count()) {
+        throw new Error(`Retour still visible after clear (${vp.prefix})`);
+      }
+      await assertNoHOverflow(page, `${vp.prefix}-empty`);
       await shot(page, `${vp.prefix}-empty`);
     }
 
