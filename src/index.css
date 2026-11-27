@@ -2081,3 +2081,251 @@ input[type='number']:focus {
     gap: var(--space-6);
   }
 }
+
+/* —— Wordmark action cluster —— */
+.wordmark-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* —— Equipment screen —— */
+.equipment-screen {
+  padding-bottom: var(--space-8);
+}
+
+.equipment-screen .wordmark {
+  align-items: center;
+}
+
+.equipment-screen .wordmark h1 {
+  flex: 1;
+  font-size: 28px;
+}
+
+.equipment-lead {
+  margin-bottom: var(--space-5);
+}
+
+.equipment-section {
+  margin-bottom: var(--space-6);
+}
+
+.equipment-section h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.equipment-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.equipment-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.equipment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  text-align: left;
+  width: 100%;
+  padding: 14px 16px;
+}
+
+.equipment-row strong {
+  display: block;
+  font-size: 16px;
+}
+
+.equipment-row p {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.equipment-editor-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: var(--space-4);
+  padding-bottom: max(var(--space-4), var(--safe-b));
+}
+
+.equipment-editor {
+  width: min(480px, 100%);
+  max-height: min(90dvh, 720px);
+  overflow: auto;
+  padding: var(--space-5);
+  border-radius: var(--radius-xl) var(--radius-xl) var(--radius-lg) var(--radius-lg);
+}
+
+.equipment-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.equipment-editor-head h2 {
+  font-size: 20px;
+}
+
+.equipment-form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.equipment-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.equipment-form input,
+.equipment-form select,
+.ex-equip-select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--text);
+}
+
+.equipment-editor-actions {
+  margin-top: var(--space-5);
+}
+
+.ex-detail-row--equip {
+  align-items: center;
+}
+
+.ex-equip-select {
+  max-width: 180px;
+  min-height: 40px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+@media (min-width: 601px) {
+  .equipment-editor-backdrop {
+    align-items: center;
+  }
+
+  .equipment-editor {
+    border-radius: var(--radius-xl);
+  }
+}
+
+/* —— Loadout suggestion under set meta —— */
+.loadout-suggest {
+  margin-top: var(--space-2);
+  max-width: 100%;
+}
+
+.loadout-suggest--compact {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.loadout-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 6px;
+  color: var(--muted);
+}
+
+.loadout-label {
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
+.loadout-sep,
+.loadout-plus,
+.loadout-pipe {
+  opacity: 0.7;
+}
+
+.loadout-bar {
+  font-variant-numeric: tabular-nums;
+}
+
+.loadout-side {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+}
+
+.plate-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.loadout-msg {
+  color: var(--warn);
+  font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.loadout-alt {
+  margin-top: 4px;
+}
+
+.loadout-alt-tag {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 2px;
+  text-align: center;
+}
+
+.hero-ex .loadout-suggest,
+.next-preview .loadout-suggest {
+  margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+  .session-info-actions .loadout-suggest--compact,
+  .next-preview .loadout-suggest--compact {
+    font-size: 11px;
+  }
+
+  .plate-pill {
+    min-width: 24px;
+    height: 20px;
+    font-size: 10px;
+    padding: 0 5px;
+  }
+}

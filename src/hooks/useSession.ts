@@ -13,7 +13,9 @@ import {
   clearSession,
   decodeHashBlock,
   updateHashBlock,
+  loadEquipmentTypeOverrides,
 } from '../utils/storage';
+import { deduceEquipmentType } from '../utils/deduceEquipmentType';
 import { requestWakeLock, releaseWakeLock } from '../utils/wakeLock';
 import { beepCountdown, beepEnd, unlockAudio } from '../utils/audio';
 
@@ -39,11 +41,22 @@ export function useSession() {
 
     if (savedSession && savedSession.exercises && savedSession.exercises.length > 0) {
       if (!hashBlock || (savedSession.block && hashBlock.trim() === savedSession.block.trim())) {
+        const overrides = loadEquipmentTypeOverrides();
+        const exercises = savedSession.exercises.map((ex) => {
+          if (ex.equipmentType !== undefined) return ex;
+          const key = ex.name.trim().toLowerCase().replace(/\s+/g, ' ');
+          const t = overrides[key] ?? deduceEquipmentType(ex.name, ex.weight);
+          return { ...ex, equipmentType: t || undefined };
+        });
+        const screen =
+          savedSession.screen === 'equipment'
+            ? 'overview'
+            : savedSession.screen || 'overview';
         return {
-          screen: savedSession.screen || 'overview',
+          screen,
           block: savedSession.block || initialBlock,
           restSec: savedSession.restSec ?? savedRest,
-          exercises: savedSession.exercises,
+          exercises,
           warnings: savedSession.warnings || [],
           stepIndex: savedSession.stepIndex || 0,
           phase: savedSession.phase || 'ready',
@@ -209,7 +222,7 @@ export function useSession() {
   }, [state.screen]);
 
   const loadWorkout = useCallback(() => {
-    const parsed = parseWorkout(state.block);
+    const parsed = parseWorkout(state.block, loadEquipmentTypeOverrides());
     if (parsed.exercises.length === 0) {
       return;
     }

@@ -1,6 +1,12 @@
 import type { Exercise, ParseResult } from '../types';
+import type { ExerciseEquipmentType } from '../types/equipment';
+import { deduceEquipmentType } from './deduceEquipmentType';
+import { normalizeExerciseKey, type EquipmentTypeOverrides } from './storage';
 
-export function parseWorkout(text: string): ParseResult {
+export function parseWorkout(
+  text: string,
+  typeOverrides: EquipmentTypeOverrides = {}
+): ParseResult {
   const exercises: Exercise[] = [];
   const warnings: { line: number; text: string; reason: string }[] = [];
   const lines = String(text == null ? '' : text).split(/\r?\n/);
@@ -33,12 +39,19 @@ export function parseWorkout(text: string): ParseResult {
       continue;
     }
 
+    const key = normalizeExerciseKey(name);
+    const override = typeOverrides[key];
+    const deduced = deduceEquipmentType(name, weight);
+    const equipmentType: ExerciseEquipmentType =
+      override !== undefined ? override : deduced;
+
     exercises.push({
       name: name,
       sets: sets,
       reps: isDuration ? null : Math.round(repsNum),
       durationSec: isDuration ? repsNum : null,
       weight: weight,
+      equipmentType: equipmentType || undefined,
       supersetTag: supersetTag ? supersetTag.toUpperCase() : undefined,
     });
   }

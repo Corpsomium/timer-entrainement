@@ -1,13 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from './hooks/useSession';
 import { useIllustrations } from './hooks/useIllustrations';
+import { useEquipment } from './hooks/useEquipment';
 import { InputScreen } from './components/InputScreen';
 import { OverviewScreen } from './components/OverviewScreen';
 import { SessionScreen } from './components/SessionScreen';
 import { DoneScreen } from './components/DoneScreen';
+import { EquipmentScreen } from './components/EquipmentScreen';
 import { shareUrl } from './utils/storage';
 import { unlockAudio } from './utils/audio';
 import { withViewTransition } from './utils/viewTransition';
+import type { SessionState } from './types';
 
 function App() {
   const {
@@ -26,7 +29,9 @@ function App() {
   } = useSession();
 
   const { getIllustration, updateExerciseIllustration } = useIllustrations(state.exercises);
+  const equipment = useEquipment();
   const [toast, setToast] = useState<string | null>(null);
+  const equipmentReturnRef = useRef<SessionState['screen']>('overview');
 
   useEffect(() => {
     const onFirstGesture = () => {
@@ -59,6 +64,20 @@ function App() {
   const resetSessionWithTransition = () => {
     withViewTransition(() => {
       resetSession();
+    });
+  };
+
+  const openEquipment = () => {
+    equipmentReturnRef.current = state.screen === 'equipment' ? 'overview' : state.screen;
+    withViewTransition(() => {
+      setState((prev) => ({ ...prev, screen: 'equipment' }));
+    });
+  };
+
+  const closeEquipment = () => {
+    const back = equipmentReturnRef.current === 'equipment' ? 'overview' : equipmentReturnRef.current;
+    withViewTransition(() => {
+      setState((prev) => ({ ...prev, screen: back }));
     });
   };
 
@@ -97,7 +116,13 @@ function App() {
     <>
       <div className="wrap">
         {state.screen === 'input' && (
-          <InputScreen state={state} setState={setState} onLoad={loadWorkoutWithTransition} onShare={handleShare} />
+          <InputScreen
+            state={state}
+            setState={setState}
+            onLoad={loadWorkoutWithTransition}
+            onShare={handleShare}
+            onOpenEquipment={openEquipment}
+          />
         )}
 
         {state.screen === 'overview' && (
@@ -107,6 +132,7 @@ function App() {
             onStart={() => startSessionWithTransition(false)}
             onResume={() => startSessionWithTransition(true)}
             onShare={handleShare}
+            onOpenEquipment={openEquipment}
             getIllustration={getIllustration}
             updateExerciseIllustration={updateExerciseIllustration}
           />
@@ -117,6 +143,7 @@ function App() {
             state={state}
             setState={setState}
             sequence={sequence}
+            inventory={equipment.inventory}
             onCompleteSet={finishSet}
             onStartWork={startWorkTimer}
             onSkipRest={finishRest}
@@ -124,6 +151,7 @@ function App() {
             onBack={goBack}
             onSkipExercise={skipExercise}
             onReset={resetSessionWithTransition}
+            onOpenEquipment={openEquipment}
             getIllustration={getIllustration}
             updateExerciseIllustration={updateExerciseIllustration}
           />
@@ -135,6 +163,20 @@ function App() {
             setState={setState}
             onRestart={() => startSessionWithTransition(false)}
             onShare={handleShare}
+          />
+        )}
+
+        {state.screen === 'equipment' && (
+          <EquipmentScreen
+            inventory={equipment.inventory}
+            onBack={closeEquipment}
+            onUpsertBar={equipment.upsertBar}
+            onRemoveBar={equipment.removeBar}
+            onUpsertPlate={equipment.upsertPlate}
+            onRemovePlate={equipment.removePlate}
+            onUpsertKettlebell={equipment.upsertKettlebell}
+            onRemoveKettlebell={equipment.removeKettlebell}
+            onReset={equipment.resetToDefault}
           />
         )}
       </div>

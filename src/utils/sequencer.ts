@@ -146,5 +146,6 @@ function previewExercise(ex: Exercise, setIndex: number) {
     reps: ex.reps,
     durationSec: ex.durationSec,
     weight: ex.weight,
+    equipmentType: ex.equipmentType,
   };
 }

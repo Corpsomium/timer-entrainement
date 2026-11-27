@@ -1,15 +1,20 @@
 import { useState, useEffect, type ReactNode } from 'react';
 import type { SessionState, SequenceStep, ExerciseIllustration, Exercise } from '../types';
+import type { EquipmentInventory, ExerciseEquipmentType } from '../types/equipment';
 import { formatDuration, formatExerciseEffort } from '../utils/formatters';
+import { deduceEquipmentType } from '../utils/deduceEquipmentType';
+import { suggestLoadout } from '../utils/loadout';
 import { withViewTransition } from '../utils/viewTransition';
 import { Lightbox } from './Lightbox';
 import { ImagePicker } from './ImagePicker';
+import { LoadoutSuggestionView } from './LoadoutSuggestionView';
 import { StickyActionsBar, StickyActionsSpacer } from './StickyActionsBar';
 
 interface SessionScreenProps {
   state: SessionState;
   setState: React.Dispatch<React.SetStateAction<SessionState>>;
   sequence: SequenceStep[];
+  inventory: EquipmentInventory;
   onCompleteSet: () => void;
   onStartWork: () => void;
   onSkipRest: () => void;
@@ -17,6 +22,7 @@ interface SessionScreenProps {
   onBack: () => void;
   onSkipExercise: () => void;
   onReset: () => void;
+  onOpenEquipment: () => void;
   getIllustration: (name: string) => ExerciseIllustration | null;
   updateExerciseIllustration: (exerciseName: string, illustration: ExerciseIllustration) => void;
 }
@@ -27,6 +33,7 @@ export function SessionScreen({
   state,
   setState,
   sequence,
+  inventory,
   onCompleteSet,
   onStartWork,
   onSkipRest,
@@ -34,6 +41,7 @@ export function SessionScreen({
   onBack,
   onSkipExercise,
   onReset,
+  onOpenEquipment,
   getIllustration,
   updateExerciseIllustration,
 }: SessionScreenProps) {
@@ -161,6 +169,15 @@ export function SessionScreen({
             <i style={{ width: `${pct}%` }}></i>
           </div>
         </div>
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={onOpenEquipment}
+          title="Matériel"
+          aria-label="Matériel"
+        >
+          ⚙
+        </button>
         <button className="icon-btn" onClick={onSkipExercise} title="Passer l'exercice">
           ⏭
         </button>
@@ -168,11 +185,16 @@ export function SessionScreen({
 
       <div className="session-scroll">
         {isRest ? (
-          <RestPhase state={state} nextExercise={currentStep.nextExercise} />
+          <RestPhase
+            state={state}
+            nextExercise={currentStep.nextExercise}
+            inventory={inventory}
+          />
         ) : isWork ? (
           <WorkPhase
             state={state}
             currentStep={currentStep}
+            inventory={inventory}
             onAdjustTimer={onAdjustTimer}
             getIllustration={getIllustration}
             setLightbox={setLightbox}
@@ -181,6 +203,7 @@ export function SessionScreen({
           <ReadyPhase
             state={state}
             currentStep={currentStep}
+            inventory={inventory}
             getIllustration={getIllustration}
             setLightbox={setLightbox}
             setPickerExercise={setPickerExercise}
@@ -232,6 +255,8 @@ function SetInfoBlock({
   reps,
   durationSec,
   weight,
+  equipmentType,
+  inventory,
   kicker,
   editControl,
   className,
@@ -242,10 +267,18 @@ function SetInfoBlock({
   reps: number | null;
   durationSec: number | null;
   weight: string;
+  equipmentType?: ExerciseEquipmentType;
+  inventory?: EquipmentInventory;
   kicker?: string;
   editControl?: ReactNode;
   className?: string;
 }) {
+  const resolvedType =
+    equipmentType || (inventory ? deduceEquipmentType(name, weight) : '');
+  const suggestion = inventory
+    ? suggestLoadout(inventory, resolvedType, weight)
+    : null;
+
   return (
     <div className={`hero-ex${className ? ` ${className}` : ''}`}>
       {kicker ? <div className="kicker">{kicker}</div> : null}
@@ -265,6 +298,7 @@ function SetInfoBlock({
           </>
         ) : null}
       </div>
+      <LoadoutSuggestionView suggestion={suggestion} />
     </div>
   );
 }
@@ -272,9 +306,11 @@ function SetInfoBlock({
 function RestPhase({
   state,
   nextExercise,
+  inventory,
 }: {
   state: SessionState;
   nextExercise?: SequenceStep['nextExercise'];
+  inventory: EquipmentInventory;
 }) {
   const [remaining, setRemaining] = useState(Math.max(0, (state.endsAt || 0) - Date.now()));
 
@@ -322,6 +358,8 @@ function RestPhase({
             reps={nextExercise.reps}
             durationSec={nextExercise.durationSec}
             weight={nextExercise.weight}
+            equipmentType={nextExercise.equipmentType}
+            inventory={inventory}
             kicker="Prochain"
           />
         </div>
@@ -381,12 +419,14 @@ function SessionDualFrame({
 function WorkPhase({
   state,
   currentStep,
+  inventory,
   onAdjustTimer,
   getIllustration,
   setLightbox,
 }: {
   state: SessionState;
   currentStep: SequenceStep;
+  inventory: EquipmentInventory;
   onAdjustTimer: (deltaSec: number) => void;
   getIllustration: (name: string) => ExerciseIllustration | null;
   setLightbox: (lightbox: { images: string[]; name: string } | null) => void;
@@ -446,6 +486,8 @@ function WorkPhase({
           reps={ex.reps}
           durationSec={ex.durationSec}
           weight={ex.weight}
+          equipmentType={ex.equipmentType}
+          inventory={inventory}
         />
 
         <div className="adj session-inline-adj" style={{ gridTemplateColumns: '1fr 1fr' }}>
@@ -464,12 +506,14 @@ function WorkPhase({
 function ReadyPhase({
   state,
   currentStep,
+  inventory,
   getIllustration,
   setLightbox,
   setPickerExercise,
 }: {
   state: SessionState;
   currentStep: SequenceStep;
+  inventory: EquipmentInventory;
   getIllustration: (name: string) => ExerciseIllustration | null;
   setLightbox: (lightbox: { images: string[]; name: string } | null) => void;
   setPickerExercise: (exercise: Exercise | null) => void;
@@ -509,6 +553,8 @@ function ReadyPhase({
             reps={ex.reps}
             durationSec={ex.durationSec}
             weight={ex.weight}
+            equipmentType={ex.equipmentType}
+            inventory={inventory}
             kicker={kicker}
             editControl={
               <button
