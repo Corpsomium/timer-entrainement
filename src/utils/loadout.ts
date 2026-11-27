@@ -6,29 +6,39 @@ import type {
   ImplementLoadout,
   LoadoutSuggestion,
   Plate,
-  SideLoad,
 } from '../types/equipment';
 import { parseWeightPrescription } from './parseWeight';
 
-const EPS = 1e-6;
+/** Work in integer centièmes de kg (1 = 0,01 kg) to avoid float drift. */
+export type Centi = number;
 
-function nearlyEqual(a: number, b: number): boolean {
-  return Math.abs(a - b) < EPS;
+export function kgToCenti(kg: number): Centi {
+  return Math.round(kg * 100);
 }
 
-function roundKg(n: number): number {
-  return Math.round(n * 1000) / 1000;
+export function centiToKg(c: Centi): number {
+  return c / 100;
 }
 
-function plateThickness(p: Plate): number | null {
-  return p.thicknessCm == null || Number.isNaN(p.thicknessCm) ? null : p.thicknessCm;
+/** Thickness in integer dixièmes de mm (1 = 0,01 cm) — same scale as cm*100. */
+export type Thick = number;
+
+export function cmToThick(cm: number): Thick {
+  return Math.round(cm * 100);
 }
 
-/** Stock map weightKg → remaining count (merged identical weights). */
-function buildPlateStock(plates: Plate[]): Map<number, { qty: number; thickness: number | null }> {
-  const map = new Map<number, { qty: number; thickness: number | null }>();
+type StockEntry = { qty: number; thickness: Thick | null };
+type Stock = Map<Centi, StockEntry>;
+
+function plateThickness(p: Plate): Thick | null {
+  if (p.thicknessCm == null || Number.isNaN(p.thicknessCm)) return null;
+  return cmToThick(p.thicknessCm);
+}
+
+function buildPlateStock(plates: Plate[]): Stock {
+  const map: Stock = new Map();
   for (const p of plates) {
-    const w = roundKg(p.weightKg);
+    const w = kgToCenti(p.weightKg);
     const prev = map.get(w);
     if (prev) {
       prev.qty += p.quantity;
@@ -40,76 +50,65 @@ function buildPlateStock(plates: Plate[]): Map<number, { qty: number; thickness:
   return map;
 }
 
-function cloneStock(
-  stock: Map<number, { qty: number; thickness: number | null }>
-): Map<number, { qty: number; thickness: number | null }> {
-  const next = new Map<number, { qty: number; thickness: number | null }>();
+function cloneStock(stock: Stock): Stock {
+  const next: Stock = new Map();
   for (const [k, v] of stock) next.set(k, { ...v });
   return next;
 }
 
 /**
- * Greedy: fill one side target with heaviest plates first.
- * Returns side plates (outer→inner order as stacked from collar outward: lightest outer often,
- * but we keep greedy order heaviest-first from collar — display will reverse for outer visual).
- * Convention: array is collar → outer (first = closest to handle).
+ * Greedy: heaviest plates first. Side order = collar → outer.
+ * Stock reservation per plate: 2 sides × implementCount.
  */
 function greedySide(
-  targetPerSide: number,
-  stock: Map<number, { qty: number; thickness: number | null }>,
-  sleeveCm: number | null | undefined,
+  targetPerSide: Centi,
+  stock: Stock,
+  sleeve: Thick | null,
   implementCount: number
-): SideLoad | null {
+): Centi[] | null {
   const weights = [...stock.keys()].sort((a, b) => b - a);
-  const side: SideLoad = [];
+  const side: Centi[] = [];
   let remaining = targetPerSide;
   let usedLength = 0;
 
   for (const w of weights) {
     const entry = stock.get(w)!;
-    // Each plate on one side needs `implementCount` copies × 2 sides = 2 * implementCount from stock
-    // while building one side we reserve 2 * implementCount per plate added
-    while (remaining + EPS >= w) {
+    while (remaining >= w) {
       const need = 2 * implementCount;
       if (entry.qty < need) break;
-      if (sleeveCm != null && entry.thickness != null) {
-        if (usedLength + entry.thickness > sleeveCm + EPS) break;
-      } else if (sleeveCm != null && entry.thickness == null) {
-        // sleeve known but thickness unknown — allow
+      if (sleeve != null && entry.thickness != null) {
+        if (usedLength + entry.thickness > sleeve) break;
       }
       side.push(w);
-      remaining = roundKg(remaining - w);
+      remaining -= w;
       entry.qty -= need;
       if (entry.thickness != null) usedLength += entry.thickness;
-      if (remaining <= EPS) break;
+      if (remaining === 0) break;
     }
-    if (remaining <= EPS) break;
+    if (remaining === 0) break;
   }
 
-  return remaining <= EPS ? side : null;
+  return remaining === 0 ? side : null;
 }
 
-/**
- * Exhaustive search for one side (mirrored both sides, stock for all implements).
- * Small search space — plate types are few.
- */
+/** Exhaustive search when greedy fails (small plate-type space). */
 function searchSide(
-  targetPerSide: number,
-  stock: Map<number, { qty: number; thickness: number | null }>,
-  sleeveCm: number | null | undefined,
+  targetPerSide: Centi,
+  stock: Stock,
+  sleeve: Thick | null,
   implementCount: number
-): SideLoad | null {
+): Centi[] | null {
   const weights = [...stock.keys()].sort((a, b) => b - a);
-  let best: SideLoad | null = null;
+  let best: Centi[] | null = null;
 
   function dfs(
     idx: number,
-    remaining: number,
-    usedLength: number,
-    current: SideLoad,
-    live: Map<number, { qty: number; thickness: number | null }>
+    remaining: Centi,
+    usedLength: Thick,
+    current: Centi[],
+    live: Stock
   ): boolean {
-    if (remaining <= EPS) {
+    if (remaining === 0) {
       best = [...current];
       return true;
     }
@@ -119,35 +118,22 @@ function searchSide(
     const entry = live.get(w)!;
     const maxByStock = Math.floor(entry.qty / (2 * implementCount));
     let maxBySleeve = maxByStock;
-    if (sleeveCm != null && entry.thickness != null && entry.thickness > 0) {
-      maxBySleeve = Math.min(
-        maxByStock,
-        Math.floor((sleeveCm - usedLength + EPS) / entry.thickness)
-      );
+    if (sleeve != null && entry.thickness != null && entry.thickness > 0) {
+      maxBySleeve = Math.min(maxByStock, Math.floor((sleeve - usedLength) / entry.thickness));
     }
-    const maxByWeight = Math.floor((remaining + EPS) / w);
+    const maxByWeight = Math.floor(remaining / w);
     const max = Math.max(0, Math.min(maxBySleeve, maxByWeight));
 
-    // Try more plates first (greedy bias), then fewer
     for (let n = max; n >= 0; n--) {
-      const next = live;
       const qtyCost = n * 2 * implementCount;
-      next.get(w)!.qty -= qtyCost;
+      entry.qty -= qtyCost;
       for (let i = 0; i < n; i++) current.push(w);
       const lenAdd = entry.thickness != null ? n * entry.thickness : 0;
-      if (
-        dfs(
-          idx + 1,
-          roundKg(remaining - n * w),
-          usedLength + lenAdd,
-          current,
-          next
-        )
-      ) {
+      if (dfs(idx + 1, remaining - n * w, usedLength + lenAdd, current, live)) {
         return true;
       }
       for (let i = 0; i < n; i++) current.pop();
-      next.get(w)!.qty += qtyCost;
+      entry.qty += qtyCost;
     }
     return false;
   }
@@ -157,52 +143,74 @@ function searchSide(
 }
 
 function solveSide(
-  targetPerSide: number,
-  stock: Map<number, { qty: number; thickness: number | null }>,
-  sleeveCm: number | null | undefined,
+  targetPerSide: Centi,
+  stock: Stock,
+  sleeve: Thick | null,
   implementCount: number
-): SideLoad | null {
-  if (targetPerSide <= EPS) return [];
+): Centi[] | null {
+  if (targetPerSide === 0) return [];
 
   const greedyStock = cloneStock(stock);
-  const greedy = greedySide(targetPerSide, greedyStock, sleeveCm, implementCount);
+  const greedy = greedySide(targetPerSide, greedyStock, sleeve, implementCount);
   if (greedy) {
-    // Commit greedy consumption onto original stock
     for (const w of greedy) {
-      const e = stock.get(w)!;
-      e.qty -= 2 * implementCount;
+      stock.get(w)!.qty -= 2 * implementCount;
     }
     return greedy;
   }
 
-  const found = searchSide(targetPerSide, stock, sleeveCm, implementCount);
+  const found = searchSide(targetPerSide, stock, sleeve, implementCount);
   if (!found) return null;
   for (const w of found) {
-    const e = stock.get(w)!;
-    e.qty -= 2 * implementCount;
+    stock.get(w)!.qty -= 2 * implementCount;
   }
   return found;
 }
 
-function mirrorSide(side: SideLoad): SideLoad {
+function mirrorSide(side: Centi[]): Centi[] {
   return [...side].reverse();
 }
 
-function sideSum(side: SideLoad): number {
-  return roundKg(side.reduce((a, b) => a + b, 0));
+function sideSum(side: Centi[]): Centi {
+  return side.reduce((a, b) => a + b, 0);
 }
 
 function pickBars(inventory: EquipmentInventory, kind: BarKind, count: number): Bar | null {
   const candidates = inventory.bars.filter((b) => b.kind === kind && b.quantity >= count);
-  if (!candidates.length) {
-    // allow using one bar type with enough total quantity across entries
-    const same = inventory.bars.filter((b) => b.kind === kind);
-    const total = same.reduce((n, b) => n + b.quantity, 0);
-    if (total < count || !same.length) return null;
-    // Prefer lightest handle that has sleeve info
-    return [...same].sort((a, b) => a.weightKg - b.weightKg)[0];
+  if (candidates.length) {
+    return [...candidates].sort((a, b) => a.weightKg - b.weightKg)[0];
   }
-  return [...candidates].sort((a, b) => a.weightKg - b.weightKg)[0];
+  const same = inventory.bars.filter((b) => b.kind === kind);
+  const total = same.reduce((n, b) => n + b.quantity, 0);
+  if (total < count || !same.length) return null;
+  return [...same].sort((a, b) => a.weightKg - b.weightKg)[0];
+}
+
+function barQty(inventory: EquipmentInventory, kind: BarKind): number {
+  return inventory.bars.filter((b) => b.kind === kind).reduce((n, b) => n + b.quantity, 0);
+}
+
+/**
+ * Resolve which bar kind to use. If the requested kind has no stock,
+ * fall back to another available plate-loading bar (haltère preferred).
+ */
+function resolveBarKind(
+  inventory: EquipmentInventory,
+  preferred: BarKind,
+  implementCount: number
+): BarKind | null {
+  if (barQty(inventory, preferred) >= implementCount) return preferred;
+  const order: BarKind[] = ['haltère', 'barre_droite', 'barre_ez'];
+  for (const k of order) {
+    if (k !== preferred && barQty(inventory, k) >= implementCount) return k;
+  }
+  // Allow split quantity across entries of same kind already handled in pickBars;
+  // if preferred has any bars totaling enough via pickBars path:
+  if (pickBars(inventory, preferred, implementCount)) return preferred;
+  for (const k of order) {
+    if (pickBars(inventory, k, implementCount)) return k;
+  }
+  return null;
 }
 
 function barKindForExercise(type: ExerciseEquipmentType): BarKind | null {
@@ -212,10 +220,11 @@ function barKindForExercise(type: ExerciseEquipmentType): BarKind | null {
   return null;
 }
 
-function buildImplement(bar: Bar, side: SideLoad): ImplementLoadout {
-  const left = [...side];
-  const right = mirrorSide(side);
-  const total = roundKg(bar.weightKg + sideSum(left) + sideSum(right));
+function buildImplement(bar: Bar, sideCenti: Centi[]): ImplementLoadout {
+  const left = sideCenti.map(centiToKg);
+  const right = mirrorSide(sideCenti).map(centiToKg);
+  const barC = kgToCenti(bar.weightKg);
+  const total = centiToKg(barC + sideSum(sideCenti) * 2);
   return {
     barWeightKg: bar.weightKg,
     left,
@@ -224,54 +233,52 @@ function buildImplement(bar: Bar, side: SideLoad): ImplementLoadout {
   };
 }
 
+function sleeveOf(bar: Bar): Thick | null {
+  if (bar.sleeveCm == null || Number.isNaN(bar.sleeveCm)) return null;
+  return cmToThick(bar.sleeveCm);
+}
+
 function tryPlateLoadout(
   inventory: EquipmentInventory,
   barKind: BarKind,
   implementCount: number,
   targetKg: number
 ): LoadoutSuggestion | null {
-  const bar = pickBars(inventory, barKind, implementCount);
+  const resolved = resolveBarKind(inventory, barKind, implementCount);
+  if (!resolved) return null;
+  const bar = pickBars(inventory, resolved, implementCount);
   if (!bar) return null;
 
-  const platesNeeded = roundKg(targetKg - bar.weightKg);
-  if (platesNeeded < -EPS) return null; // bar heavier than target
-  if (platesNeeded <= EPS) {
+  const targetC = kgToCenti(targetKg);
+  const barC = kgToCenti(bar.weightKg);
+  const platesNeeded = targetC - barC;
+  if (platesNeeded < 0) return null;
+  if (platesNeeded === 0) {
     return {
       kind: 'plates',
       exact: true,
-      label: labelForBar(barKind),
+      label: labelForBar(resolved),
       implements: Array.from({ length: implementCount }, () => buildImplement(bar, [])),
       targetKg,
       implementCount,
     };
   }
 
-  if (platesNeeded % 2 !== 0 && Math.abs((platesNeeded * 2) % 2) > EPS) {
-    // per-side must be half — allow .625 etc.
-  }
-  const perSide = roundKg(platesNeeded / 2);
-  // Must be achievable with plate denominations — check 2*perSide ≈ platesNeeded
-  if (!nearlyEqual(perSide * 2, platesNeeded)) {
-    // floating; still try
-  }
+  // Per side must be exact half (mirrored plates)
+  if (platesNeeded % 2 !== 0) return null;
+  const perSide = platesNeeded / 2;
 
   const stock = buildPlateStock(inventory.plates);
-  // Also verify we have enough bars in stock count
-  const barQty = inventory.bars
-    .filter((b) => b.kind === barKind)
-    .reduce((n, b) => n + b.quantity, 0);
-  if (barQty < implementCount) return null;
-
-  const side = solveSide(perSide, stock, bar.sleeveCm, implementCount);
+  const side = solveSide(perSide, stock, sleeveOf(bar), implementCount);
   if (!side) return null;
 
   const impl = buildImplement(bar, side);
-  if (!nearlyEqual(impl.totalKg, targetKg)) return null;
+  if (kgToCenti(impl.totalKg) !== targetC) return null;
 
   return {
     kind: 'plates',
     exact: true,
-    label: labelForBar(barKind),
+    label: labelForBar(resolved),
     implements: Array.from({ length: implementCount }, () => ({
       ...impl,
       left: [...impl.left],
@@ -288,50 +295,52 @@ function labelForBar(kind: BarKind): string {
   return 'Barre';
 }
 
-/** All totals achievable with given bar + plate stock for `implementCount` mirrors. */
-function enumerateAchievableTotals(
+/**
+ * All totals achievable with bar + plate stock for `implementCount` mirrored implements.
+ * Exported for parametric tests.
+ */
+export function enumerateAchievableTotals(
   inventory: EquipmentInventory,
   barKind: BarKind,
   implementCount: number,
-  maxTarget: number
+  maxTargetKg = 80
 ): number[] {
-  const bar = pickBars(inventory, barKind, implementCount);
+  const resolved = resolveBarKind(inventory, barKind, implementCount);
+  if (!resolved) return [];
+  const bar = pickBars(inventory, resolved, implementCount);
   if (!bar) return [];
+
   const stock = buildPlateStock(inventory.plates);
   const weights = [...stock.keys()].sort((a, b) => b - a);
-  const totals = new Set<number>();
-  totals.add(roundKg(bar.weightKg));
+  const sleeve = sleeveOf(bar);
+  const barC = kgToCenti(bar.weightKg);
+  const maxTargetC = kgToCenti(maxTargetKg);
+  const totals = new Set<Centi>();
+  totals.add(barC);
 
-  function dfs(
-    idx: number,
-    perSide: number,
-    usedLength: number,
-    live: Map<number, { qty: number; thickness: number | null }>
-  ) {
-    const total = roundKg(bar!.weightKg + perSide * 2);
-    if (total > maxTarget + 40) return;
+  function dfs(idx: number, perSide: Centi, usedLength: Thick, live: Stock) {
+    const total = barC + perSide * 2;
+    if (total > maxTargetC + kgToCenti(40)) return;
     totals.add(total);
     if (idx >= weights.length) return;
     const w = weights[idx];
     const entry = live.get(w)!;
-    const maxByStock = Math.floor(entry.qty / (2 * implementCount));
-    let max = maxByStock;
-    if (bar!.sleeveCm != null && entry.thickness != null && entry.thickness > 0) {
-      max = Math.min(max, Math.floor((bar!.sleeveCm - usedLength + EPS) / entry.thickness));
+    let max = Math.floor(entry.qty / (2 * implementCount));
+    if (sleeve != null && entry.thickness != null && entry.thickness > 0) {
+      max = Math.min(max, Math.floor((sleeve - usedLength) / entry.thickness));
     }
-    // Cap plates per side to keep search small
-    max = Math.min(max, 8);
+    max = Math.min(max, 10);
     for (let n = 0; n <= max; n++) {
       const qtyCost = n * 2 * implementCount;
       entry.qty -= qtyCost;
       const lenAdd = entry.thickness != null ? n * entry.thickness : 0;
-      dfs(idx + 1, roundKg(perSide + n * w), usedLength + lenAdd, live);
+      dfs(idx + 1, perSide + n * w, usedLength + lenAdd, live);
       entry.qty += qtyCost;
     }
   }
 
   dfs(0, 0, 0, cloneStock(stock));
-  return [...totals].sort((a, b) => a - b);
+  return [...totals].map(centiToKg).sort((a, b) => a - b);
 }
 
 function nearestAlternatives(
@@ -341,11 +350,13 @@ function nearestAlternatives(
   targetKg: number
 ): { below: LoadoutSuggestion | null; above: LoadoutSuggestion | null } {
   const totals = enumerateAchievableTotals(inventory, barKind, implementCount, targetKg);
+  const targetC = kgToCenti(targetKg);
   let belowKg: number | null = null;
   let aboveKg: number | null = null;
   for (const t of totals) {
-    if (t < targetKg - EPS) belowKg = t;
-    else if (t > targetKg + EPS) {
+    const c = kgToCenti(t);
+    if (c < targetC) belowKg = t;
+    else if (c > targetC) {
       aboveKg = t;
       break;
     }
@@ -362,13 +373,13 @@ function suggestKettlebell(
   targetKg: number
 ): LoadoutSuggestion {
   const available: { kg: number; qty: number }[] = [];
-  const map = new Map<number, number>();
+  const map = new Map<Centi, number>();
   for (const k of inventory.kettlebells) {
-    const w = roundKg(k.weightKg);
+    const w = kgToCenti(k.weightKg);
     map.set(w, (map.get(w) || 0) + k.quantity);
   }
-  for (const [kg, qty] of map) {
-    if (qty >= implementCount) available.push({ kg, qty });
+  for (const [c, qty] of map) {
+    if (qty >= implementCount) available.push({ kg: centiToKg(c), qty });
   }
   available.sort((a, b) => a.kg - b.kg);
 
@@ -384,17 +395,18 @@ function suggestKettlebell(
     };
   }
 
+  const targetC = kgToCenti(targetKg);
   let best = available[0];
-  let bestDist = Math.abs(best.kg - targetKg);
+  let bestDist = Math.abs(kgToCenti(best.kg) - targetC);
   for (const a of available) {
-    const d = Math.abs(a.kg - targetKg);
-    if (d < bestDist - EPS || (nearlyEqual(d, bestDist) && a.kg < best.kg)) {
+    const d = Math.abs(kgToCenti(a.kg) - targetC);
+    if (d < bestDist || (d === bestDist && a.kg < best.kg)) {
       best = a;
       bestDist = d;
     }
   }
 
-  const exact = nearlyEqual(best.kg, targetKg);
+  const exact = kgToCenti(best.kg) === targetC;
   return {
     kind: 'kettlebell',
     exact,
@@ -416,7 +428,6 @@ export function suggestLoadout(
   weightRaw: string
 ): LoadoutSuggestion | null {
   if (
-    !equipmentType ||
     equipmentType === 'bande' ||
     equipmentType === 'poids_du_corps' ||
     equipmentType === 'autre'
@@ -427,11 +438,24 @@ export function suggestLoadout(
   const rx = parseWeightPrescription(weightRaw);
   if (!rx) return null;
 
-  if (equipmentType === 'kettlebell') {
+  // Empty / ambiguous type: prefer haltères when handles exist (common for "20kg").
+  const effectiveType: ExerciseEquipmentType =
+    equipmentType ||
+    (barQty(inventory, 'haltère') >= rx.count
+      ? 'haltères'
+      : barQty(inventory, 'barre_droite') >= rx.count
+        ? 'barre_droite'
+        : barQty(inventory, 'barre_ez') >= rx.count
+          ? 'barre_ez'
+          : '');
+
+  if (!effectiveType) return null;
+
+  if (effectiveType === 'kettlebell') {
     return suggestKettlebell(inventory, rx.count, rx.kg);
   }
 
-  const barKind = barKindForExercise(equipmentType);
+  const barKind = barKindForExercise(effectiveType);
   if (!barKind) return null;
 
   const exact = tryPlateLoadout(inventory, barKind, rx.count, rx.kg);
@@ -484,6 +508,7 @@ export function formatLoadoutText(suggestion: LoadoutSuggestion): string {
 
 export function formatKg(n: number | undefined): string {
   if (n == null || Number.isNaN(n)) return '';
-  const r = roundKg(n);
-  return String(r).replace('.', ',');
+  const c = kgToCenti(n);
+  const kg = centiToKg(c);
+  return String(kg).replace('.', ',');
 }

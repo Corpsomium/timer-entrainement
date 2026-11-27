@@ -13,7 +13,8 @@ const BODY_RE =
 
 /**
  * Best-effort deduction from exercise name + weight string.
- * Returns '' when ambiguous.
+ * Returns '' when ambiguous — never assume barre_droite from weight alone
+ * (a lone "20kg" is often dumbbells with this kit).
  */
 export function deduceEquipmentType(
   name: string,
@@ -29,14 +30,15 @@ export function deduceEquipmentType(
 
   const rx = parseWeightPrescription(weight);
   if (rx && rx.count >= 2) {
-    if (HALT_RE.test(n) || !BAR_RE.test(n)) return 'haltères';
+    // Paired loads are almost always dumbbells / kettlebells; prefer haltères
+    // unless the name clearly points to a barbell movement.
+    if (BAR_RE.test(n) && !HALT_RE.test(n)) return 'barre_droite';
+    return 'haltères';
   }
 
   if (HALT_RE.test(n)) return 'haltères';
   if (BAR_RE.test(n)) return 'barre_droite';
 
-  if (rx && rx.count >= 2) return 'haltères';
-  if (rx && rx.count === 1 && rx.kg >= 20) return 'barre_droite';
-
+  // Ambiguous single load (e.g. "20kg") — leave empty for the user to set.
   return '';
 }
