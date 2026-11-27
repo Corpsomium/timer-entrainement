@@ -16,9 +16,18 @@ const AUCUN: EquipmentTypeOption = {
   calculates: false,
 };
 
+function opt(
+  value: ExerciseEquipmentType,
+  label: string,
+  calculates: boolean
+): EquipmentTypeOption {
+  return { value, label, shortLabel: label, calculates };
+}
+
 /**
  * Equipment types the user can pick during a session:
  * only bar/KB kinds present in inventory, plus « Aucun » to hide the loadout.
+ * Chip labels are full names (wrap on narrow viewports).
  */
 export function availableEquipmentTypeOptions(
   inventory: EquipmentInventory
@@ -30,38 +39,10 @@ export function availableEquipmentTypeOptions(
   const hasEz = inventory.bars.some((b) => b.kind === 'barre_ez' && b.quantity > 0);
   const hasKb = inventory.kettlebells.some((k) => k.quantity > 0);
 
-  if (hasHalt) {
-    options.push({
-      value: 'haltères',
-      label: 'Haltères',
-      shortLabel: 'Halt.',
-      calculates: true,
-    });
-  }
-  if (hasDroite) {
-    options.push({
-      value: 'barre_droite',
-      label: 'Barre droite',
-      shortLabel: 'Barre',
-      calculates: true,
-    });
-  }
-  if (hasEz) {
-    options.push({
-      value: 'barre_ez',
-      label: 'Barre EZ',
-      shortLabel: 'EZ',
-      calculates: true,
-    });
-  }
-  if (hasKb) {
-    options.push({
-      value: 'kettlebell',
-      label: 'Kettlebell',
-      shortLabel: 'KB',
-      calculates: true,
-    });
-  }
+  if (hasHalt) options.push(opt('haltères', 'Haltères', true));
+  if (hasDroite) options.push(opt('barre_droite', 'Barre droite', true));
+  if (hasEz) options.push(opt('barre_ez', 'Barre EZ', true));
+  if (hasKb) options.push(opt('kettlebell', 'Kettlebell', true));
 
   return [...options, AUCUN];
 }

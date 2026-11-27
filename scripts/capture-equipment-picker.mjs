@@ -12,6 +12,21 @@ const BLOCK = `Développé incliné : 3x12 (2x15kg)
 Rowing penché : 3x12 (2x15kg)
 Marches du fermier : 2x30s (2x15kg)`;
 
+/** Full kit so after shots show wrapped full-name chips when needed. */
+const FULL_KIT = {
+  bars: [
+    { id: 'h', name: 'Manche', kind: 'haltère', weightKg: 2.5, sleeveCm: 8.3, quantity: 2 },
+    { id: 'd', name: 'Barre', kind: 'barre_droite', weightKg: 20, sleeveCm: 20, quantity: 1 },
+    { id: 'e', name: 'EZ', kind: 'barre_ez', weightKg: 10, sleeveCm: 15, quantity: 1 },
+  ],
+  plates: [
+    { id: 'p1', weightKg: 1.25, quantity: 4, thicknessCm: 2 },
+    { id: 'p2', weightKg: 2.5, quantity: 8, thicknessCm: 2.3 },
+    { id: 'p3', weightKg: 5, quantity: 6, thicknessCm: 2.8 },
+  ],
+  kettlebells: [{ id: 'k', weightKg: 16, quantity: 2 }],
+};
+
 async function shot(page, name) {
   await page.waitForTimeout(280);
   const file = `${name}.png`;
@@ -21,15 +36,19 @@ async function shot(page, name) {
   console.log('saved', p1);
 }
 
-async function gotoReady(page) {
-  await page.addInitScript(() => {
-    document.startViewTransition = undefined;
-    try {
-      localStorage.removeItem('muscu-timer-equipment');
-      localStorage.removeItem('muscu-timer-session');
-      localStorage.removeItem('muscu-timer-equipment-types');
-    } catch (_) {}
-  });
+async function gotoReady(page, { fullKit = false } = {}) {
+  await page.addInitScript(
+    ({ kit, useFull }) => {
+      document.startViewTransition = undefined;
+      try {
+        localStorage.removeItem('muscu-timer-session');
+        localStorage.removeItem('muscu-timer-equipment-types');
+        if (useFull) localStorage.setItem('muscu-timer-equipment', JSON.stringify(kit));
+        else localStorage.removeItem('muscu-timer-equipment');
+      } catch (_) {}
+    },
+    { kit: FULL_KIT, useFull: fullKit }
+  );
   await page.goto(BASE, { waitUntil: 'networkidle' });
   await page.fill('#block', BLOCK);
   await page.fill('#rest', '45');
@@ -53,10 +72,10 @@ try {
       viewport: { width: vp.w, height: vp.h },
       deviceScaleFactor: 1,
     });
-    await gotoReady(page);
+    // After: seed full kit so all full-name chips (incl. wrap on 390) are visible
+    await gotoReady(page, { fullKit: OUT === 'after' });
     await shot(page, `${vp.prefix}-exercise`);
 
-    // After: change picker if present
     const picker = page.locator('.equip-picker');
     if (OUT === 'after' && (await picker.count()) > 0) {
       await shot(page, `${vp.prefix}-picker`);

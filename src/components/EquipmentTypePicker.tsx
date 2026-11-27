@@ -36,10 +36,9 @@ export function EquipmentTypePicker({
             className={`equip-chip${selected ? ' equip-chip--active' : ''}${
               opt.calculates ? '' : ' equip-chip--mute'
             }`}
-            title={opt.label}
             onClick={() => onChange(opt.value)}
           >
-            {opt.shortLabel}
+            {opt.label}
           </button>
         );
       })}
