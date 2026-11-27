@@ -1,9 +1,15 @@
+import type { ExerciseEquipmentType } from './types/equipment';
+
+export type { ExerciseEquipmentType };
+
 export interface Exercise {
   name: string;
   sets: number;
   reps: number | null;
   durationSec: number | null;
   weight: string;
+  /** How the load is realized — drives loadout suggestions. */
+  equipmentType?: ExerciseEquipmentType;
   supersetTag?: string;
 }
 
@@ -32,11 +38,12 @@ export interface SequenceStep {
     reps: number | null;
     durationSec: number | null;
     weight: string;
+    equipmentType?: ExerciseEquipmentType;
   };
 }
 
 export interface SessionState {
-  screen: 'input' | 'overview' | 'session' | 'done';
+  screen: 'input' | 'overview' | 'session' | 'done' | 'equipment';
   block: string;
   restSec: number;
   exercises: Exercise[];

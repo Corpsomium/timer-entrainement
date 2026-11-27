@@ -1,7 +1,13 @@
 import { useState } from 'react';
-import type { SessionState, Exercise, ExerciseIllustration } from '../types';
+import type { SessionState, Exercise, ExerciseIllustration, ExerciseEquipmentType } from '../types';
+import { EXERCISE_EQUIPMENT_OPTIONS } from '../types/equipment';
 import { formatLoad } from '../utils/formatters';
-import { saveRest } from '../utils/storage';
+import {
+  normalizeExerciseKey,
+  loadEquipmentTypeOverrides,
+  saveEquipmentTypeOverrides,
+  saveRest,
+} from '../utils/storage';
 import { getAudioMuteHint, unlockAudio } from '../utils/audio';
 import { Lightbox } from './Lightbox';
 import { ImagePicker } from './ImagePicker';
@@ -13,6 +19,7 @@ interface OverviewScreenProps {
   onStart: () => void;
   onResume: () => void;
   onShare: () => void;
+  onOpenEquipment: () => void;
   getIllustration: (name: string) => ExerciseIllustration | null;
   updateExerciseIllustration: (exerciseName: string, illustration: ExerciseIllustration) => void;
 }
@@ -23,6 +30,7 @@ export function OverviewScreen({
   onStart,
   onResume,
   onShare,
+  onOpenEquipment,
   getIllustration,
   updateExerciseIllustration,
 }: OverviewScreenProps) {
@@ -99,9 +107,14 @@ export function OverviewScreen({
         <h1>
           Séance<span>.</span>
         </h1>
-        <button className="icon-btn" onClick={onShare} title="Partager">
-          ↗
-        </button>
+        <div className="wordmark-actions">
+          <button type="button" className="btn btn-ghost btn-compact" onClick={onOpenEquipment}>
+            Matériel
+          </button>
+          <button type="button" className="icon-btn" onClick={onShare} title="Partager">
+            ↗
+          </button>
+        </div>
       </div>
 
       <div className="stats">
@@ -162,6 +175,18 @@ export function OverviewScreen({
                   index={item.index}
                   illustration={getIllustration(item.exercise.name)}
                   onImageChange={setPickerExercise}
+                  onEquipmentTypeChange={(type) => {
+                    const key = normalizeExerciseKey(item.exercise.name);
+                    const map = loadEquipmentTypeOverrides();
+                    map[key] = type;
+                    saveEquipmentTypeOverrides(map);
+                    setState((prev) => ({
+                      ...prev,
+                      exercises: prev.exercises.map((ex, i) =>
+                        i === item.index ? { ...ex, equipmentType: type || undefined } : ex
+                      ),
+                    }));
+                  }}
                 />
               ))}
             </div>
@@ -172,6 +197,19 @@ export function OverviewScreen({
               index={group.exercises[0].index}
               illustration={getIllustration(group.exercises[0].exercise.name)}
               onImageChange={setPickerExercise}
+              onEquipmentTypeChange={(type) => {
+                const idx = group.exercises[0].index;
+                const key = normalizeExerciseKey(group.exercises[0].exercise.name);
+                const map = loadEquipmentTypeOverrides();
+                map[key] = type;
+                saveEquipmentTypeOverrides(map);
+                setState((prev) => ({
+                  ...prev,
+                  exercises: prev.exercises.map((ex, i) =>
+                    i === idx ? { ...ex, equipmentType: type || undefined } : ex
+                  ),
+                }));
+              }}
             />
           )
         )}
@@ -293,11 +331,13 @@ function ExerciseCard({
   index,
   illustration,
   onImageChange,
+  onEquipmentTypeChange,
 }: {
   exercise: Exercise;
   index: number;
   illustration: ExerciseIllustration | null;
   onImageChange: (exercise: Exercise) => void;
+  onEquipmentTypeChange: (type: ExerciseEquipmentType) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [lightbox, setLightbox] = useState<{ images: string[]; name: string } | null>(null);
@@ -383,6 +423,23 @@ function ExerciseCard({
                   <span className="ex-detail-value">{exercise.weight}</span>
                 </div>
               )}
+              <div className="ex-detail-row ex-detail-row--equip" onClick={(e) => e.stopPropagation()}>
+                <span className="ex-detail-label">Matériel</span>
+                <select
+                  className="ex-equip-select"
+                  value={exercise.equipmentType || ''}
+                  aria-label={`Type de matériel pour ${exercise.name}`}
+                  onChange={(e) =>
+                    onEquipmentTypeChange(e.target.value as ExerciseEquipmentType)
+                  }
+                >
+                  {EXERCISE_EQUIPMENT_OPTIONS.map((o) => (
+                    <option key={o.value || 'empty'} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
               {exercise.supersetTag && (
                 <div className="superset-tag-pill">
                   Superset {exercise.supersetTag}

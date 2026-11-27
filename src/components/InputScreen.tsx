@@ -5,18 +5,24 @@ interface InputScreenProps {
   setState: React.Dispatch<React.SetStateAction<SessionState>>;
   onLoad: () => void;
   onShare: () => void;
+  onOpenEquipment: () => void;
 }
 
-export function InputScreen({ state, setState, onLoad, onShare }: InputScreenProps) {
+export function InputScreen({ state, setState, onLoad, onShare, onOpenEquipment }: InputScreenProps) {
   return (
     <>
       <div className="wordmark">
         <h1>
           Séance<span>.</span>
         </h1>
-        <button className="icon-btn" onClick={onShare} title="Partager">
-          ↗
-        </button>
+        <div className="wordmark-actions">
+          <button type="button" className="btn btn-ghost btn-compact" onClick={onOpenEquipment}>
+            Matériel
+          </button>
+          <button type="button" className="icon-btn" onClick={onShare} title="Partager">
+            ↗
+          </button>
+        </div>
       </div>
 
       <p className="hint">
