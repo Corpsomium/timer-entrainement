@@ -111,6 +111,14 @@ export function OverviewScreen({
           <button type="button" className="btn btn-ghost btn-compact" onClick={onOpenEquipment}>
             Matériel
           </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-compact"
+            onClick={() => setState((prev) => ({ ...prev, screen: 'input' }))}
+            title="Modifier le bloc d'exercices"
+          >
+            Bloc
+          </button>
           <button type="button" className="icon-btn" onClick={onShare} title="Partager">
             ↗
           </button>

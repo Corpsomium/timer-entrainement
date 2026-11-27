@@ -2233,6 +2233,59 @@ input[type='number']:focus {
   }
 }
 
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-4);
+  max-width: 100%;
+}
+
+.field-row .field {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.field-row-action {
+  width: auto; /* override .btn { width: 100% } — was overflowing the row */
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding-inline: 12px;
+  font-size: 13px;
+}
+
+.field-row-action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.confirm-dialog {
+  max-height: none;
+}
+
+.confirm-dialog-message {
+  margin: 0 0 var(--space-5);
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.confirm-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.confirm-dialog-actions .btn {
+  width: auto;
+  min-width: 7.5rem;
+  flex: 1 1 auto;
+}
+
 /* —— Loadout suggestion under set meta —— */
 .loadout-suggest {
   margin-top: var(--space-2);

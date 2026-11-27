@@ -16,6 +16,7 @@ import {
   loadEquipmentTypeOverrides,
 } from '../utils/storage';
 import { deduceEquipmentType } from '../utils/deduceEquipmentType';
+import { clearedExerciseBlockState } from '../utils/clearExerciseBlock';
 import { requestWakeLock, releaseWakeLock } from '../utils/wakeLock';
 import { beepCountdown, beepEnd, unlockAudio } from '../utils/audio';
 
@@ -476,6 +477,16 @@ export function useSession() {
     releaseWakeLock();
   }, [stopTimer]);
 
+  /** Wipe the exercise block + session progress; keep rest & equipment prefs. */
+  const clearExerciseBlock = useCallback(() => {
+    stopTimer();
+    clearSession();
+    saveBlock('');
+    updateHashBlock('');
+    setState((prev) => clearedExerciseBlockState(prev));
+    releaseWakeLock();
+  }, [stopTimer]);
+
   return {
     state,
     setState,
@@ -489,5 +500,6 @@ export function useSession() {
     goBack,
     skipExercise,
     resetSession,
+    clearExerciseBlock,
   };
 }
