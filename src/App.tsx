@@ -26,6 +26,7 @@ function App() {
     goBack,
     skipExercise,
     resetSession,
+    clearExerciseBlock,
   } = useSession();
 
   const { getIllustration, updateExerciseIllustration } = useIllustrations(state.exercises);
@@ -64,6 +65,12 @@ function App() {
   const resetSessionWithTransition = () => {
     withViewTransition(() => {
       resetSession();
+    });
+  };
+
+  const clearExerciseBlockWithTransition = () => {
+    withViewTransition(() => {
+      clearExerciseBlock();
     });
   };
 
@@ -122,6 +129,7 @@ function App() {
             onLoad={loadWorkoutWithTransition}
             onShare={handleShare}
             onOpenEquipment={openEquipment}
+            onClearBlock={clearExerciseBlockWithTransition}
           />
         )}
 

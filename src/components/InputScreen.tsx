@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import type { SessionState, ParseWarning } from '../types';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface InputScreenProps {
   state: SessionState;
@@ -6,9 +8,20 @@ interface InputScreenProps {
   onLoad: () => void;
   onShare: () => void;
   onOpenEquipment: () => void;
+  onClearBlock: () => void;
 }
 
-export function InputScreen({ state, setState, onLoad, onShare, onOpenEquipment }: InputScreenProps) {
+export function InputScreen({
+  state,
+  setState,
+  onLoad,
+  onShare,
+  onOpenEquipment,
+  onClearBlock,
+}: InputScreenProps) {
+  const [confirmClear, setConfirmClear] = useState(false);
+  const canClear = Boolean(state.block.trim() || state.exercises.length > 0);
+
   return (
     <>
       <div className="wordmark">
@@ -31,9 +44,19 @@ export function InputScreen({ state, setState, onLoad, onShare, onOpenEquipment 
         créer des supersets.
       </p>
 
-      <label className="field" htmlFor="block">
-        Votre bloc
-      </label>
+      <div className="field-row">
+        <label className="field" htmlFor="block">
+          Votre bloc
+        </label>
+        <button
+          type="button"
+          className="btn btn-ghost btn-compact field-row-action"
+          disabled={!canClear}
+          onClick={() => setConfirmClear(true)}
+        >
+          Tout vider
+        </button>
+      </div>
       <textarea
         id="block"
         spellCheck={false}
@@ -69,7 +92,7 @@ export function InputScreen({ state, setState, onLoad, onShare, onOpenEquipment 
       )}
 
       <div className="actions">
-        <button className="btn btn-primary" onClick={onLoad}>
+        <button className="btn btn-primary" onClick={onLoad} disabled={!state.block.trim()}>
           Charger la séance
         </button>
       </div>
@@ -86,6 +109,20 @@ export function InputScreen({ state, setState, onLoad, onShare, onOpenEquipment 
       )}
 
       <p className="foot">Fonctionne hors ligne, sans compte. La séance est mémorisée sur cet appareil.</p>
+
+      {confirmClear && (
+        <ConfirmDialog
+          title="Tout vider ?"
+          message="Le bloc d'exercices et la progression de séance seront effacés. Le matériel et les types mémorisés par exercice sont conservés."
+          confirmLabel="Tout vider"
+          danger
+          onCancel={() => setConfirmClear(false)}
+          onConfirm={() => {
+            setConfirmClear(false);
+            onClearBlock();
+          }}
+        />
+      )}
     </>
   );
 }
