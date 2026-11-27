@@ -6,7 +6,6 @@ import type {
   ImplementLoadout,
   LoadoutSuggestion,
   Plate,
-  SideLoad,
 } from '../types/equipment';
 import { parseWeightPrescription } from './parseWeight';
 
